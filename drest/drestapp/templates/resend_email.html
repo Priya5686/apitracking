@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body>
+<form method="POST" action="/resend-verification/">
+    {% csrf_token %}
+    <label for="email">Enter your email:</label>
+    <input type="email" name="email" id="email" required>
+    <button type="submit">Resend Verification Link</button>
+</form>
+</body>
+</html>

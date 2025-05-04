@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="login-wrapper">
+  <form method="POST" action="/login/" class="login-form">
+    {% csrf_token %}
+
+    <p class="sub-heading">Please enter your details</p>
+    <h2>Welcome back</h2>
+
+    <input type="email" name="email" placeholder="Email address" required>
+    <input type="password" name="password" placeholder="Password" required>
+
+    <div class="form-options">
+      <a href="/forgot-password/">Forgot password</a>
+    </div>
+
+    <button type="submit" class="primary-btn">Sign In</button>
+
+       <div class="social-login">
+            <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-btn">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" class="google-icon">
+                Sign up with Google
+            </a>
+        </div>
+
+
+    <p class="bottom-link">Don't have an account? <a href="/register/">Sign up</a></p>
+  </form>
+</div>
+
+</body>
+</html>
