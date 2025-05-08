@@ -29,6 +29,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 TOMORROW_IO_BASE_URL = config('TOMORROW_IO_BASE_URL')
 TOMORROW_IO_API_KEY = config('TOMORROW_IO_API_KEY')
+GOOGLE_SPREADSHEET_ID = config('GOOGLE_SPREADSHEET_ID')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -88,7 +89,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework.authentication.SessionAuthentication',
+        #'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -101,9 +102,9 @@ OAUTH2_PROVIDER = {
     'REQUEST_APPROVAL_PROMPT': 'auto',
     'ALLOWED_REDIRECT_URI_SCHEMES': ['http', 'https'],
     'AUTHORIZATION_CODE_EXPIRE_SECONDS': 1000,
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 86400,
-    'ROTATE_REFRESH_TOKEN': True,
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 600,   #10 mts
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 86400, # 1 day
+    'ROTATE_REFRESH_TOKEN': False,
     'OAUTH2_BACKEND_CLASS':'oauth2_provider.oauth2_backends.OAuthLibCore',
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope'},
     'PKCE_REQUIRED': True,
@@ -120,15 +121,20 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
+    'drestapp.pipeline.save_emails_to_google_sheet',
 )
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/spreadsheets',
 ]
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
     'prompt': 'select_account consent',
     'access_type': 'offline',
 }
+SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ['access_token', 'refresh_token', 'expires']
+
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://127.0.0.1:8000/social-auth/complete/google-oauth2/'
 #SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/dashboard/'
@@ -215,9 +221,9 @@ AUTH_USER_MODEL = 'drestapp.CustomUser'
 
 SITE_URL = "http://127.0.0.1:8000"
 
-SESSION_COOKIE_AGE = 1209600  # Two weeks
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_SAVE_EVERY_REQUEST = True
+#SESSION_COOKIE_AGE = 1209600  # Two weeks
+#SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+#SESSION_SAVE_EVERY_REQUEST = True
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -227,6 +233,21 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'testprojectapp1234@gmail.com'
 EMAIL_HOST_PASSWORD = 'uzgh hqmh sfqk yoea'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
 
 
 

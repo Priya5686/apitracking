@@ -13,11 +13,22 @@
   <form method="POST" action="/login/" class="login-form">
     {% csrf_token %}
 
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+     </ul>
+    {% endif %}
+
+
     <p class="sub-heading">Please enter your details</p>
     <h2>Welcome back</h2>
 
     <input type="email" name="email" placeholder="Email address" required>
     <input type="password" name="password" placeholder="Password" required>
+
+    
 
     <div class="form-options">
       <a href="/forgot-password/">Forgot password</a>

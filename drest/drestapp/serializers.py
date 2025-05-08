@@ -27,16 +27,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        validate_password(value)  # This enforces rules like length, complexity, etc.
+        validate_password(value)  
         return value
 
     def validate(self, attrs):
-        email = attrs.get('email')
+        """email = attrs.get('email')
         username = attrs.get('username')
         if CustomUser.objects.filter(email=email).exists():
             raise serializers.ValidationError({"email": "A user with this email already exists."})
         if CustomUser.objects.filter(username=username).exists():
-            raise serializers.ValidationError({"username": "A user with this username already exists."})
+            raise serializers.ValidationError({"username": "A user with this username already exists."})"""
         return attrs
 
     # Create the user
@@ -47,8 +47,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             user.is_superuser = False
             user.save()
             return user
-        except Exception as e:
-            raise serializers.ValidationError({"error": str(e)})
+        except IntegrityError:
+            raise serializers.ValidationError({"non_field_errors": ["User could not be created."]})
+        #except Exception as e:
+            #raise serializers.ValidationError({"error": str(e)})
 
 
 

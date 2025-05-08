@@ -1,4 +1,60 @@
-import { fetchWithAutoRefresh } from './auth.js';
+//import { fetchWithAutoRefresh } from './auth.js';
+
+async function refreshAccessToken() {
+    try {
+        const res = await fetch("/api/refresh-token/", {
+            method: "GET",
+            credentials: "include",
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            return data.access_token;
+        } else {
+            const errData = await res.json();
+            console.warn("Refresh token failed:", errData);
+        }
+    } catch (err) {
+        console.error("Network error during refresh:", err);
+    }
+    return null;
+}
+
+async function fetchWithAutoRefresh(url, options = {}) {
+    const accessToken = await getAccessToken();
+
+    let res = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            Authorization: `Bearer ${accessToken}`,
+        },
+        credentials: "include",
+    });
+
+    if (res.status === 401) {
+        console.log("Access token expired. Trying refresh...");
+
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+            // Retry the original request with new access token
+            return fetch(url, {
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                    Authorization: `Bearer ${newToken}`,
+                },
+                credentials: "include",
+            });
+        } else {
+            console.warn("Refresh token failed. Redirecting to login...");
+            window.location.href = "/login/";
+        }
+    }
+
+    return res;
+}
+
 
 async function loadDashboard() {
     const usernameElement = document.getElementById("username");
@@ -22,11 +78,11 @@ async function loadDashboard() {
     try {
         const res = await fetchWithAutoRefresh("/api/whoami/", {
             method: "GET",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`
-            },
+            //headers: {
+                //"Authorization": `Bearer ${accessToken}`
+            //},
             credentials: "include"
-        });*/
+        });
 
 
         if (res.status === 403 || res.status === 401) {

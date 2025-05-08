@@ -47,6 +47,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from rest_framework.decorators import api_view, permission_classes
 
 CustomUser = get_user_model()
 
@@ -58,6 +59,10 @@ def register_view(request):
 
 def profile_view(request):
     return render(request, "profile.html")
+
+def login_page(request):
+    return render(request, "login.html")
+
 
 
 logger = logging.getLogger(__name__)
@@ -320,12 +325,23 @@ def validate_access_token(access_token):
         logger.error(f"Unexpected error during token validation: {str(e)}")
         return {"status": False, "error": f"Unexpected error: {str(e)}"}
 
+import logging
+import requests
+from django.conf import settings
+from rest_framework.response import Response
+#from rest_framework.decorators import api_view,permission_classes
+from rest_framework.permissions import AllowAny
+
 logger = logging.getLogger(__name__)
 
+from rest_framework.decorators import api_view,permission_classes
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def refresh_access_token(request):
     refresh_token = request.COOKIES.get("refresh_token")
     if not refresh_token:
-        return {"error": "Refresh token not found"}
+        return Response({"error": "Refresh token not found"}, status=400)
 
     data = {
         "grant_type": "refresh_token",
@@ -342,10 +358,21 @@ def refresh_access_token(request):
             headers=headers,
             timeout=10
         )
-        response.raise_for_status()
-        return response.json()
+
+        # Get the JSON whether it's 200 or 400
+        response_data = response.json()
+
+        if response.status_code == 200:
+            return Response({
+                "access_token": response_data.get("access_token")
+            })
+        else:
+            return Response(response_data, status=response.status_code)
+
     except requests.RequestException as e:
-        return {"error": str(e)}
+        return Response({"error": str(e)}, status=500)
+
+    
 
 
 logger = logging.getLogger(__name__)
@@ -394,7 +421,7 @@ class DashboardApiView(APIView):
             return JsonResponse({"error": "Unauthorized"}, status=401)
 
         #social_auths = UserSocialAuth.objects.filter(user=request.user).values("provider", "uid")
-        #user = request.user
+        user = request.user
         return JsonResponse({
             "username": user.username,
             "email": user.email,
@@ -541,7 +568,8 @@ def reset_password_view(request, uidb64, token):
                 user.set_password(password1)
                 user.save()
                 messages.success(request, "✅ Password reset successful! Please log in with your new password.")
-                return redirect('login')
+                return redirect('/login_page/')
+                #return redirect('login')
             else:
                 messages.error(request, "❌ Passwords do not match. Please try again.")
                 return redirect(request.path)

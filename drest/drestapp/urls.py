@@ -13,7 +13,7 @@ from .views import (
     AccountView,
     refresh_access_token,
     WhoAmIEndpoint,LogoutView, forgot_password_view, reset_password_view, GetAccessTokenView,
-    profile_view,WeatherAPIView,weather_view, oauth_success_redirect
+    profile_view,WeatherAPIView,weather_view, oauth_success_redirect, login_page
 )
 
 urlpatterns = [
@@ -21,6 +21,7 @@ urlpatterns = [
     path('', home_view, name='home'),
     path('register/', register_view, name='register'),
     path('login/', login_view, name='login'),
+    path('login_page/', login_page, name='login_page'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('profile/', profile_view, name='profile'),
     path('api/dashboard/', DashboardApiView.as_view(), name='dashboard-api'),
