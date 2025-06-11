@@ -16,16 +16,12 @@ from django.conf.global_settings import AUTH_USER_MODEL
 
 
 import os
-from decouple import Config, RepositoryEnv 
+from decouple import config, RepositoryEnv 
 import dj_database_url
-
-ENV = os.getenv("DJANGO_ENV", "development")
-env_file = f".env.{ENV}"
-custom_config = Config(RepositoryEnv(env_file))
 
 
 DATABASES = {
-    'default': dj_database_url.config(default=custom_config('DATABASE_URL'))
+    'default': dj_database_url.config(default=config('DATABASE_URL'))
 }
 
 """import os
@@ -41,12 +37,12 @@ DATABASES = {
 }"""
 
 
-OAUTH_CLIENT_ID = custom_config('OAUTH_CLIENT_ID')
-OAUTH_CLIENT_SECRET = custom_config('OAUTH_CLIENT_SECRET')
-JWT_SECRET_KEY = custom_config('JWT_SECRET_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = custom_config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = custom_config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
-AVIATIONAPI_KEY = custom_config('AVIATIONAPI_KEY')
+OAUTH_CLIENT_ID = config('OAUTH_CLIENT_ID')
+OAUTH_CLIENT_SECRET = config('OAUTH_CLIENT_SECRET')
+JWT_SECRET_KEY = config('JWT_SECRET_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+AVIATIONAPI_KEY = config('AVIATIONAPI_KEY')
 
 #ENV = os.getenv("DJANGO_ENV", "development")
 #env_file = f".env.{ENV}"
