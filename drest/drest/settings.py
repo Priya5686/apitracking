@@ -18,6 +18,12 @@ from django.conf.global_settings import AUTH_USER_MODEL
 import os
 from decouple import config, Csv
 
+import dj_database_url
+
+DATABASES = {
+    'default': dj_database_url.config(default=config('DATABASE_URL'))
+}
+
 OAUTH_CLIENT_ID = config('OAUTH_CLIENT_ID')
 OAUTH_CLIENT_SECRET = config('OAUTH_CLIENT_SECRET')
 JWT_SECRET_KEY = config('JWT_SECRET_KEY')
@@ -186,7 +192,7 @@ DATABASES = {
     }
 }
 
-DATABASES = {
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gmailsyncdb',
@@ -195,7 +201,10 @@ DATABASES = {
         'HOST': 'localhost',  # or your PostgreSQL server IP
         'PORT': '5432',        # default PostgreSQL port
     }
-}
+}"""
+
+
+
 
 
 # Password validation
