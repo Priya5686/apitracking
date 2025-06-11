@@ -14,13 +14,9 @@ from pathlib import Path
 
 from django.conf.global_settings import AUTH_USER_MODEL
 
-from decouple import Config, RepositoryEnv
+
 import os
-
-ENV = os.getenv("DJANGO_ENV", "development")
-
-env_file = f".env.{ENV}"
-config = Config(RepositoryEnv(env_file))
+from decouple import config, Csv
 
 OAUTH_CLIENT_ID = config('OAUTH_CLIENT_ID')
 OAUTH_CLIENT_SECRET = config('OAUTH_CLIENT_SECRET')
@@ -29,6 +25,9 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 AVIATIONAPI_KEY = config('AVIATIONAPI_KEY')
 
+#ENV = os.getenv("DJANGO_ENV", "development")
+#env_file = f".env.{ENV}"
+#config = Config(RepositoryEnv(env_file))
 #TOMORROW_IO_BASE_URL = config('TOMORROW_IO_BASE_URL')
 #TOMORROW_IO_API_KEY = config('TOMORROW_IO_API_KEY')
 #GOOGLE_SPREADSHEET_ID = config('GOOGLE_SPREADSHEET_ID')
