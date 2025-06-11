@@ -46,7 +46,7 @@ SECRET_KEY = 'django-insecure-_kqm18y_jv8_k6kivh5w%$-8+=z2!jouh4^0gs+j^c@=_p8f!7
 
 DEBUG = True
 
-ALLOWED_HOSTS = [flightsapi.onrender.com]
+ALLOWED_HOSTS = ['flightsapi.onrender.com']
 
 
 INSTALLED_APPS = [
