@@ -5,7 +5,7 @@ from .models import CustomUser, EmailVerificationToken
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ('username', 'email', 'is_active', 'email_verified')
+    list_display = ('id', 'username', 'email', 'is_active', 'email_verified')
     list_filter = ('is_staff', 'is_active', 'email_verified')
     #fieldsets = UserAdmin.fieldsets + (
         #(None, {'fields': ('email_verified',)}),
@@ -16,8 +16,15 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(EmailVerificationToken)
 class EmailVerificationTokenAdmin(admin.ModelAdmin):
-    list_display = ('user', 'token', 'created_at',)
+    list_display = ('user', 'token', 'created_at', 'id', 'user_id_display')
     search_fields = ('user__email', 'token')
+
+    def user_id_display(self, obj):
+        return obj.user.id
+    user_id_display.short_description = 'User ID' 
+
+
+
 
 
 

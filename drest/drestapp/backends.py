@@ -11,31 +11,6 @@ class EmailBackend(ModelBackend):
         except CustomUser.DoesNotExist:
             return None
 
-
-"""from django.contrib.auth.backends import ModelBackend
-from oauth2_provider.models import AccessToken
-from django.utils.timezone import now
-
-class OAuth2CookieBackend(ModelBackend):
-    def authenticate(self, request, **kwargs):
-        if not request:
-        return None
-
-        access_token = request.COOKIES.get('access_token')
-        if not access_token:
-        return None
-
-        try:
-            token = AccessToken.objects.get(token=access_token)
-            if token.is_valid(now()):
-            return token.user
-        except AccessToken.DoesNotExist:
-        return None
-
-        return None
-"""
-
-
 from django.contrib.auth.backends import ModelBackend
 from oauth2_provider.models import AccessToken
 from django.utils.timezone import now

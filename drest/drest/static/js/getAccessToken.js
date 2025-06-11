@@ -1,4 +1,6 @@
+let cachedAccessToken = null;
 async function getAccessToken() {
+    if (cachedAccessToken) return cachedAccessToken;
     try {
         const res = await fetch("/api/get-token/",
         {
@@ -7,7 +9,9 @@ async function getAccessToken() {
         });
         if (res.ok) {
             const data = await res.json();
-            return data.access_token;
+            cachedAccessToken = data.access_token;
+            //return data.access_token;
+            return cachedAccessToken;
         }
     } catch (err) {
         console.error("Error fetching access token:", err);

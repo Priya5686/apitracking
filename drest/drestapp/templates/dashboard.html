@@ -117,17 +117,29 @@
     <h2></h2>
       <h3>User Info</h3>
       <pre id="json-output" style="background: #f4f4f4; padding: 1rem; border-radius: 5px;"></pre>
-      <input type="text" id="location-input" placeholder="Enter a location" />
-      <button id="weather-btn">Check Weather</button>
-        <p id="weather-info"></p>
-        <p id="weather-location"></p>
-        <p id="weather-url" style="font-size: 0.9em; color: gray;"></p>
+      <h3>AI-Detected Events from Gmail</h3>
+      <div id="ai-events-output">
+          <p>Loading events...</p>
+      </div>
 
+      <div class="container">
+        <h2>Flight Information Lookup</h2>
+        <label>Flight Number:</label>
+        <input type="text" id="flight_number">
+        <label>Date:</label>
+        <input type="date" id="flight_date">
+        <label>Airline:</label>
+        <input type="text" id="airline_name">
+        <button onclick="handleFlightSearch()">Search Flight</button>
+
+        <div id="flight-data-output" class="flight-info"></div>
+    </div>
   </div>
 
   <script src="{% static 'js/getAccessToken.js' %}"></script>
   <script src="{% static 'js/logout.js' %}"></script>
   <script src="{% static 'js/dashboard.js' %}"></script> 
+  
 
 
   <script>

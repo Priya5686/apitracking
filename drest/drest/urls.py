@@ -24,10 +24,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('', include('drestapp.urls')),
+    path('', include('flights.urls')),
     path('social-auth/', include('social_django.urls', namespace='social')),
     #path('auth/', include('social_django.urls', namespace='social')),
+   
+
 ]
 
 
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+
+
+#urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
 

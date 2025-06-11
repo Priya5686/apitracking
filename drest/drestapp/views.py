@@ -1,53 +1,67 @@
 import uuid
 import os
-import requests
-import logging
+import secrets
 import json
+import logging
 import hashlib
 import base64
-from jwt.exceptions import ExpiredSignatureError
+import requests
+from datetime import datetime, timedelta
+from django.utils import timezone
+from dateutil.parser import parse as parse_date
+import re
+
 from django.conf import settings
-from datetime import timedelta
-from django.contrib.auth import get_user_model
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from django.core.mail import send_mail
 from django.urls import reverse
 from django.utils.timezone import now
-from django.views.decorators.http import require_POST
-from oauth2_provider.contrib.rest_framework import OAuth2Authentication
-from requests.cookies import get_cookie_header
-from rest_framework.exceptions import NotFound
-from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView
-from urllib.parse import urlencode
-from smtplib import SMTPException
-from .models import EmailVerificationToken, CustomUser
-from .serializers import RegisterSerializer, AccountSerializer
-from oauth2_provider.views import AuthorizationView, TokenView
-from django.http import HttpResponseForbidden
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from oauth2_provider.views.generic import ProtectedResourceView
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect
-from datetime import datetime, timezone
-from django.contrib.auth import authenticate, login
-from django.views.decorators.csrf import csrf_protect
-from django.shortcuts import render, redirect
-from django.shortcuts import redirect, render
-from django.http import JsonResponse, HttpResponse
-from django.utils.timezone import now
-from datetime import timedelta
-from oauth2_provider.models import AccessToken
-from django.contrib.auth.models import User
-from django.template.loader import render_to_string
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib import messages
-from django.contrib.auth import login
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.views.decorators.http import require_POST
+from .models import ExtractedEvent, GmailMessage
+
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import NotFound
+
+
+from rest_framework.authentication import BaseAuthentication
+from django.contrib.auth.models import User
+
+
+from oauth2_provider.contrib.rest_framework import OAuth2Authentication
+from oauth2_provider.views import AuthorizationView, TokenView
+from oauth2_provider.models import AccessToken, RefreshToken, Application
+from oauth2_provider.views.generic import ProtectedResourceView
+from oauthlib.common import generate_token
+
+from social_django.models import UserSocialAuth
+
+from drestapp.models import (
+    EmailVerificationToken,
+    CustomUser,
+    FlightRecord,
+    GmailMessage,
+    ExtractedEvent,
+)
+from drestapp.serializers import RegisterSerializer, AccountSerializer
+from drestapp.utils import extract_events_with_ollama, extract_events_fallback
+import logging
+
+
+
+
+
+
+
 
 CustomUser = get_user_model()
 
@@ -161,7 +175,7 @@ def resend_verification_link(request):
         return render(request, "resend_email.html")
 
 
-import secrets
+
 
 def generate_code_verifier():
     return secrets.token_urlsafe(64)
@@ -325,16 +339,10 @@ def validate_access_token(access_token):
         logger.error(f"Unexpected error during token validation: {str(e)}")
         return {"status": False, "error": f"Unexpected error: {str(e)}"}
 
-import logging
-import requests
-from django.conf import settings
-from rest_framework.response import Response
-#from rest_framework.decorators import api_view,permission_classes
-from rest_framework.permissions import AllowAny
+
 
 logger = logging.getLogger(__name__)
 
-from rest_framework.decorators import api_view,permission_classes
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -407,11 +415,6 @@ def token_from_cookie(request):
         return None
 
 
-from oauth2_provider.views.generic import ProtectedResourceView
-from django.http import JsonResponse
-from social_django.models import UserSocialAuth
-
-
 class DashboardApiView(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
@@ -452,7 +455,6 @@ class AccountView(APIView):
         return Response({"errors": serializer.errors, "msg": "Account update failed."}, status=400)
 
 
-from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 class WhoAmIEndpoint(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
@@ -582,9 +584,7 @@ def reset_password_view(request, uidb64, token):
 
 
 
-from django.http import JsonResponse
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+
 
 class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
@@ -597,11 +597,6 @@ class GetAccessTokenView(APIView):
 
 
 
-import requests
-from django.http import JsonResponse
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from django.shortcuts import render
 
 
 class WeatherAPIView(APIView):
@@ -678,11 +673,6 @@ def weather_view(request):
         })"""
 
 
-from oauth2_provider.models import AccessToken, RefreshToken, Application
-from oauthlib.common import generate_token
-from datetime import timedelta
-from django.utils import timezone
-from django.shortcuts import redirect
 
 def oauth_success_redirect(request):
     user = request.user
@@ -698,11 +688,11 @@ def oauth_success_redirect(request):
     ).order_by('-expires').first()
 
     if access_token and access_token.expires > now:
-        # ✅ Token is still valid — reuse it
+        #Token is still valid,reuse it
         token = access_token.token
 
     else:
-        # 🔄 Token expired — try to refresh
+        #Token expired,refresh
         refresh = RefreshToken.objects.filter(
             user=user,
             application=app,
@@ -710,7 +700,7 @@ def oauth_success_redirect(request):
         ).first()
 
         if refresh:
-            # 🔁 Refresh token exists — generate new access token
+            #Refresh token exists — generate new access token
             token = generate_token()
             expires = now + timedelta(hours=1)
 
@@ -722,12 +712,12 @@ def oauth_success_redirect(request):
                 scope='read write'
             )
 
-            # Update refresh token to point to new access token
+            #Update refresh token to point to new access token
             refresh.access_token = access_token
             refresh.save()
 
         else:
-            # ❌ No valid refresh token — issue both new tokens
+            #No valid refresh token — issue both new tokens
             token = generate_token()
             refresh_token = generate_token()
             expires = now + timedelta(hours=1)
@@ -747,7 +737,7 @@ def oauth_success_redirect(request):
                 access_token=access_token
             )
 
-    # ✅ Set token in cookie
+    #Set token in cookie
     response = redirect('/dashboard/')
     response.set_cookie(
         'access_token',
@@ -757,3 +747,254 @@ def oauth_success_redirect(request):
         secure=False  # change to True in production
     )
     return response
+
+
+
+def safe_parse(value):
+    if isinstance(value, str):
+        try:
+            return parse(value)
+        except ValueError:
+            return None
+    return value
+
+class GmailEventDetectionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        all_events = []
+        messages = GmailMessage.objects.order_by('-received_at')[:3]  # Fetch multiple emails
+
+        for msg in messages:
+            #email_text = msg.plain_content.replace("**", "").strip()
+            email_text = (msg.plain_content or "").replace("**", "").strip()
+
+
+            # Primary event extraction using DeepSeek model
+            events = extract_events_with_ollama(email_text)
+
+            # Fallback check: If events have "TBD" or missing dates, try fallback extraction
+            for idx, e in enumerate(events):
+                if e.get("start") in ["TBD", None] or e.get("end") in ["TBD", None]:
+                    fallback_events = json.loads(extract_events_fallback(email_text)).get("events", [])
+                    
+                    # Ensure only missing fields are updated, rather than replacing full objects
+                    for fallback in fallback_events:
+                        if e.get("description") == fallback.get("description"):
+                            events[idx]["start"] = fallback.get("date", e.get("start"))
+                            events[idx]["end"] = fallback.get("date", e.get("end"))
+
+            # Deduplication logic before saving to DB
+            for e in events:
+                exists = ExtractedEvent.objects.filter(
+                    type=e.get("type", ""),
+                    description=e.get("description", ""),
+                    start_datetime=safe_parse(e.get("start"))
+                ).exists()
+
+                if not exists:
+                    event_obj, created = ExtractedEvent.objects.get_or_create(
+                        type=e.get("type", ""),
+                        description=e.get("description", ""),
+                        start_datetime=safe_parse(e.get("start")),
+                        end_datetime=safe_parse(e.get("end")),
+                        user=request.user
+                    )
+             
+                    all_events.append({
+                        "id": event_obj.id,
+                        "type": event_obj.type,
+                        "description": event_obj.description,
+                        "start": event_obj.start_datetime.isoformat() if event_obj.start_datetime else None,
+                        "end": event_obj.end_datetime.isoformat() if event_obj.end_datetime else None
+                    })
+        upcoming_events = ExtractedEvent.objects.filter(user=request.user,start_datetime__gte=now()).order_by("start_datetime")
+
+        return Response({
+            "events": all_events,
+            "message_count": len(messages)
+        })
+
+
+
+
+
+class GoogleOAuthAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return None
+        
+        access_token = auth_header.split("Bearer ")[1]
+
+        # ✅ Validate Google OAuth token
+        user_info_url = f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}"
+        response = requests.get(user_info_url)
+
+        if response.status_code != 200:
+            return None  # Invalid token
+        
+        user_data = response.json()
+        email = user_data.get("email")
+
+        if not email:
+            return None  # Missing email
+
+        # ✅ Find or create user in Django
+        user, _ = User.objects.get_or_create(username=email, defaults={"email": email})
+        return (user, None)
+    
+from django.contrib.auth import login
+
+def google_login_success(request):
+    user = request.user
+    if user.is_authenticated:
+        login(request, user) 
+        return redirect('/dashboard/')
+    return redirect('/login/')
+
+
+
+
+from dateutil.parser import parse 
+
+logger = logging.getLogger(__name__)  # ✅ Initialize logging
+
+#AVIATIONSTACK_API_KEY = "452dd185aa6fd62185cd598aa1453998"
+AVIATIONSTACK_API_KEY = settings.AVIATIONAPI_KEY
+
+AIRLINE_MAP = {
+    "Emirates": "EK",
+    "Qatar Airways": "QR",
+    "Etihad": "EY",
+    "IndiGo": "6E",
+    "Air India": "AI",
+    "SpiceJet": "SG",
+    "Air Arabia": "G9"
+}
+
+def normalize_date(date_input: str) -> str:
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(date_input, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    raise ValueError("Invalid date format. Use YYYY-MM-DD or DD/MM/YYYY.")
+
+def fetch_flight_info(flight_number: str, scheduled_date: str, airline_name: str):
+    airline_iata = AIRLINE_MAP.get(airline_name)
+    if not airline_iata:
+        return {"error": "Unsupported airline name"}
+
+    url = "http://api.aviationstack.com/v1/flights"
+    params = {
+        "access_key": AVIATIONSTACK_API_KEY,
+        "flight_number": flight_number,
+        "airline_iata": airline_iata,
+        "scheduled": scheduled_date 
+        #"scheduled": flight_date
+    }
+
+    response = requests.get(url, params=params)
+    logger.info(f"📡 API Request: {response.url}")  # ✅ Log request URL
+    data = response.json().get("data", [])
+
+    if not data:
+        return {"error": "No matching flight found for that date."}
+
+    flight = data[0]  
+    return {
+        "scheduled_departure_airport": flight["departure"].get("airport"),
+        "scheduled_departure_code": flight["departure"].get("iata"),
+        "scheduled_arrival_airport": flight["arrival"].get("airport"),
+        "scheduled_arrival_code": flight["arrival"].get("iata"),
+        "airline_name": flight["airline"].get("name"),
+        "flight_number": flight["flight"].get("number"),
+        "scheduled_departure_time": flight["departure"].get("scheduled"),
+        "actual_departure_time": flight["departure"].get("actual"),
+        "departure_delay_time": flight["departure"].get("delay"),
+        "scheduled_arrival_time": flight["arrival"].get("scheduled"),
+        "actual_arrival_time": flight["arrival"].get("actual"),
+        "arrival_delay_time": flight["arrival"].get("delay"),
+        "arrival_gate": flight["arrival"].get("gate"),
+        "arrival_belt_number": flight["arrival"].get("baggage")
+    }
+
+
+logger = logging.getLogger(__name__)
+
+def flight_data_view(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
+
+    try:
+        flight_number = request.GET.get("flight_number")
+        scheduled_date = request.GET.get("scheduled")
+        airline_name = request.GET.get("airline_name")
+
+        if not (flight_number and scheduled_date and airline_name):
+            return JsonResponse({"error": "Missing required parameters"}, status=400)
+
+        formatted_date = normalize_date(scheduled_date)
+        flight_info = fetch_flight_info(flight_number, formatted_date, airline_name)
+
+        if not flight_info or "error" in flight_info:
+            return JsonResponse({"error": "No matching flight found for that date."}, status=404)
+
+        logger.info(f"📡 Flight info: {flight_info}")
+
+        # Save to DB
+        scheduled_departure_time = parse_date(flight_info["scheduled_departure_time"])
+        scheduled_date_obj = scheduled_departure_time.date()
+
+        FlightRecord.objects.update_or_create(
+            user=request.user,
+            flight_number=flight_info["flight_number"],
+            airline_name=flight_info["airline_name"],
+            scheduled_date=scheduled_date_obj,
+            defaults={
+                "scheduled_departure_airport": flight_info["scheduled_departure_airport"],
+                "scheduled_departure_code": flight_info["scheduled_departure_code"],
+                "scheduled_arrival_airport": flight_info["scheduled_arrival_airport"],
+                "scheduled_arrival_code": flight_info["scheduled_arrival_code"],
+                "scheduled_departure_time": scheduled_departure_time,
+                "scheduled_arrival_time": flight_info["scheduled_arrival_time"],
+                "actual_departure_time": flight_info["actual_departure_time"],
+                "actual_arrival_time": flight_info["actual_arrival_time"],
+                "arrival_gate": flight_info.get("arrival_gate"),
+                "arrival_belt_number": flight_info.get("arrival_belt_number"),
+            }
+        )
+
+        return JsonResponse(flight_info)
+
+    except Exception as e:
+        logger.error(f"❌ Error fetching/saving flight data: {e}")
+        return JsonResponse({"error": "Internal server error"}, status=500)
+
+
+def fetch_stored_flights(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
+
+    flights = FlightRecord.objects.filter(user=request.user)
+
+    if not flights.exists():
+        return JsonResponse({"flights": [], "message": "No stored flights found."})
+
+    flight_data = []
+    for flight in flights:
+        flight_data.append({
+            "flight_number": flight.flight_number,
+            "airline_name": flight.airline_name,
+            "scheduled_departure_airport": flight.scheduled_departure_airport,
+            "scheduled_arrival_airport": flight.scheduled_arrival_airport,
+            "scheduled_departure_time": flight.scheduled_departure_time.isoformat() if flight.scheduled_departure_time else None,
+            "scheduled_arrival_time": flight.scheduled_arrival_time.isoformat() if flight.scheduled_arrival_time else None,
+            "actual_departure_time": flight.actual_departure_time.isoformat() if flight.actual_departure_time else None,
+            "actual_arrival_time": flight.actual_arrival_time.isoformat() if flight.actual_arrival_time else None,
+            "gate_number": flight.gate_number,
+            "belt_number": flight.belt_number,
+        })
+
+    return JsonResponse({"flights": flight_data})

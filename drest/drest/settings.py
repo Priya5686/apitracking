@@ -27,9 +27,12 @@ OAUTH_CLIENT_SECRET = config('OAUTH_CLIENT_SECRET')
 JWT_SECRET_KEY = config('JWT_SECRET_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
-TOMORROW_IO_BASE_URL = config('TOMORROW_IO_BASE_URL')
-TOMORROW_IO_API_KEY = config('TOMORROW_IO_API_KEY')
-GOOGLE_SPREADSHEET_ID = config('GOOGLE_SPREADSHEET_ID')
+AVIATIONAPI_KEY = config('AVIATIONAPI_KEY')
+
+#TOMORROW_IO_BASE_URL = config('TOMORROW_IO_BASE_URL')
+#TOMORROW_IO_API_KEY = config('TOMORROW_IO_API_KEY')
+#GOOGLE_SPREADSHEET_ID = config('GOOGLE_SPREADSHEET_ID')
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -59,6 +62,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'social_django',
+    'flights',
 ]
 
 MIDDLEWARE = [
@@ -114,23 +118,29 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
     'social_core.pipeline.social_auth.auth_allowed',
+
     'drestapp.pipeline.link_to_existing_user',
+
     'social_core.pipeline.social_auth.social_user',
     'social_core.pipeline.user.get_username',
+
     'social_core.pipeline.user.create_user',
     'social_core.pipeline.social_auth.associate_user',
+
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
-    'drestapp.pipeline.save_emails_to_google_sheet',
+    
+    'drestapp.pipeline.save_emails_to_db'
+    #'drestapp.pipeline.save_emails_to_google_sheet',
 )
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/spreadsheets',
+    #'https://www.googleapis.com/auth/spreadsheets',
 ]
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
-    'prompt': 'select_account consent',
+    #'prompt': 'select_account consent',
     'access_type': 'offline',
 }
 SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ['access_token', 'refresh_token', 'expires']
@@ -176,6 +186,18 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'gmailsyncdb',
+        'USER': 'priya',
+        'PASSWORD': 'ainotify',
+        'HOST': 'localhost',  # or your PostgreSQL server IP
+        'PORT': '5432',        # default PostgreSQL port
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -247,6 +269,8 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
+
+
 
 
 
