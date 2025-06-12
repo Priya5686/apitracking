@@ -75,7 +75,13 @@ def fetch_flight_info(flight_number: str, dep_date: str, airline_name: str) -> d
     }
 
     response = requests.get(url, params=params)
-    response.raise_for_status()
+    print("📤 Sending request to AviationStack:", params)
+    print("🌐 Full URL:", response.url)
+    print("📥 API Response Status:", response.status_code)
+    print("📥 API Response Body:", response.text)
+
+    response.raise_for_status()  # This will raise HTTPError for 4xx/5xx
+
     data = response.json().get("data", [])
 
     for flight in data:
