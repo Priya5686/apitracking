@@ -121,6 +121,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     #'drestapp.middleware.access_token.AccessTokenMiddleware',
     #'drestapp.middleware.dashboard_access.DashboardAccessMiddleware',
     #'drestapp.middleware.log_request_time.LogRequestTimeMiddleware',

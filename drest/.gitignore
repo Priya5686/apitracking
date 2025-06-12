@@ -18,7 +18,6 @@ oenv/
 db.sqlite3
 
 # Static and media
-
 /media/
 /staticfiles/
 
