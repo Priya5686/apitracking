@@ -16,25 +16,11 @@ from django.conf.global_settings import AUTH_USER_MODEL
 
 
 import os
-from decouple import config, RepositoryEnv 
-import dj_database_url
-
-
-DATABASES = {
-    'default': dj_database_url.config(default=config('DATABASE_URL'))
-}
-
-"""import os
-from decouple import config, RepositoryEnv
-import dj_database_url
+from decouple import Config, RepositoryEnv 
 
 ENV = os.getenv("DJANGO_ENV", "development")
 env_file = f".env.{ENV}"
-custom_config = config(RepositoryEnv(env_file))  
-
-DATABASES = {
-    'default': dj_database_url.config(default=custom_config('DATABASE_URL'))
-}"""
+config = Config(RepositoryEnv(env_file))
 
 
 OAUTH_CLIENT_ID = config('OAUTH_CLIENT_ID')
@@ -65,8 +51,9 @@ SECRET_KEY = 'django-insecure-_kqm18y_jv8_k6kivh5w%$-8+=z2!jouh4^0gs+j^c@=_p8f!7
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
+#ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
 
+ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -205,7 +192,7 @@ DATABASES = {
     }
 }
 
-"""DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gmailsyncdb',
@@ -214,7 +201,7 @@ DATABASES = {
         'HOST': 'localhost',  # or your PostgreSQL server IP
         'PORT': '5432',        # default PostgreSQL port
     }
-}"""
+}
 
 
 
