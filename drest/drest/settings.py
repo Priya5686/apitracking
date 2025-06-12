@@ -16,6 +16,52 @@ from django.conf.global_settings import AUTH_USER_MODEL
 
 
 import os
+import dj_database_url
+
+# Detect if running on Render
+RENDER = os.getenv("RENDER") == "1"
+
+if RENDER:
+    # Use Render-provided DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ['DATABASE_URL'],
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+
+    # Use direct env vars from Render
+    def get_env(key):
+        return os.environ[key]
+
+else:
+    # Local PostgreSQL with .env files
+    from decouple import Config, RepositoryEnv
+    ENV = os.getenv("DJANGO_ENV", "development")
+    env_file = f".env.{ENV}"
+    config = Config(RepositoryEnv(env_file))
+
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL')
+        )
+    }
+
+    def get_env(key):
+        return config(key)
+    
+OAUTH_CLIENT_ID = get_env('OAUTH_CLIENT_ID')
+OAUTH_CLIENT_SECRET = get_env('OAUTH_CLIENT_SECRET')
+JWT_SECRET_KEY = get_env('JWT_SECRET_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = get_env('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = get_env('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+AVIATIONAPI_KEY = get_env('AVIATIONAPI_KEY')
+
+
+#This is working one. If nothing works will fix this
+
+"""import os
 from decouple import Config, RepositoryEnv 
 
 ENV = os.getenv("DJANGO_ENV", "development")
@@ -28,14 +74,9 @@ OAUTH_CLIENT_SECRET = config('OAUTH_CLIENT_SECRET')
 JWT_SECRET_KEY = config('JWT_SECRET_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
-AVIATIONAPI_KEY = config('AVIATIONAPI_KEY')
+AVIATIONAPI_KEY = config('AVIATIONAPI_KEY')"""
 
-#ENV = os.getenv("DJANGO_ENV", "development")
-#env_file = f".env.{ENV}"
-#config = Config(RepositoryEnv(env_file))
-#TOMORROW_IO_BASE_URL = config('TOMORROW_IO_BASE_URL')
-#TOMORROW_IO_API_KEY = config('TOMORROW_IO_API_KEY')
-#GOOGLE_SPREADSHEET_ID = config('GOOGLE_SPREADSHEET_ID')
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,9 +92,9 @@ SECRET_KEY = 'django-insecure-_kqm18y_jv8_k6kivh5w%$-8+=z2!jouh4^0gs+j^c@=_p8f!7
 
 DEBUG = True
 
-#ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
+ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
 
-ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -185,7 +226,7 @@ WSGI_APPLICATION = 'drest.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -201,7 +242,7 @@ DATABASES = {
         'HOST': 'localhost',  # or your PostgreSQL server IP
         'PORT': '5432',        # default PostgreSQL port
     }
-}
+}"""
 
 
 
