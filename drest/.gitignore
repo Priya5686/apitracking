@@ -8,6 +8,11 @@ __pycache__/
 *.env
 secrets.json
 
+# Python virtual environments
+venv/
+env/
+oenv/
+
 # SQLite database
 *.sqlite3
 db.sqlite3
