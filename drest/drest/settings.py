@@ -21,6 +21,9 @@ import dj_database_url
 # Detect if running on Render
 RENDER = os.getenv("RENDER") == "1"
 
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+
 
 if RENDER:
     # Use Render-provided DATABASE_URL
@@ -316,6 +319,15 @@ AUTH_USER_MODEL = 'drestapp.CustomUser'
 #SESSION_COOKIE_AGE = 1209600  # Two weeks
 #SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 #SESSION_SAVE_EVERY_REQUEST = True
+
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = 3600  # or higher
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
