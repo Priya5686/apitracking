@@ -14,7 +14,10 @@ def flight_form_view(request):
 def flight_status(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+            else:
+                data = request.POST
             flight_number = data.get('flight_number')
             airline_name = data.get('airline_name')
             departure_date = data.get('departure_date')
