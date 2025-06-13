@@ -222,9 +222,11 @@ def login_view(request):
 
         # Redirect to OAuth provider
         auth_url = (
-            f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code&client_id={settings.OAUTH_CLIENT_ID}&"
-            f"redirect_uri=http://127.0.0.1:8000/oauth/callback/&scope=read write&"
-            f"code_challenge={code_challenge}&code_challenge_method=S256"
+            f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code&client_id={settings.OAUTH_CLIENT_ID}"
+            f"&redirect_uri={settings.SITE_URL}/oauth/callback/"
+            f"&scope=read write"
+            f"&code_challenge={code_challenge}"
+            f"&code_challenge_method=S256"
         )
         return redirect(auth_url)
 
@@ -257,11 +259,12 @@ def oauth_callback(request):
         return JsonResponse({"error": "PKCE verifier is required."}, status=400)
 
     # Exchange the authorization code for tokens
-    token_url = "http://127.0.0.1:8000/o/token/"
+    #token_url = "http://127.0.0.1:8000/o/token/"
+    token_url = settings.OAUTH_TOKEN_URL
     response = requests.post(token_url, data={
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": "http://127.0.0.1:8000/oauth/callback/",
+        "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
         "client_id": settings.OAUTH_CLIENT_ID,
         "client_secret": settings.OAUTH_CLIENT_SECRET,
         "code_verifier": code_verifier,
