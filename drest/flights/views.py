@@ -4,6 +4,8 @@ from rest_framework import status
 from .utils import normalize_date, fetch_flight_info
 from .models import FlightStatusRecord
 from django.utils.dateparse import parse_datetime
+from django.shortcuts import render,redirect
+
 
 class FlightStatusAPIView(APIView):
     def post(self, request):
@@ -41,3 +43,7 @@ class FlightStatusAPIView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+def flight_form_view(request):
+    return render(request, "flight_form.html")
+
