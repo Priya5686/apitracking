@@ -14,7 +14,7 @@ from .views import (
     refresh_access_token,
     WhoAmIEndpoint,LogoutView, forgot_password_view, reset_password_view, GetAccessTokenView,
     profile_view,WeatherAPIView,weather_view, oauth_success_redirect, login_page, GmailEventDetectionView,
-    extract_events_fallback, flight_data_view,fetch_stored_flights,create_superuser_view
+    extract_events_fallback, flight_data_view,fetch_stored_flights
 )
 
 urlpatterns = [
