@@ -58,15 +58,18 @@ else:
 
 #SITE_URL = os.getenv('SITE_URL', 'https://testservice-qh07.onrender.com') 
 
-SITE_URL = "https://testservice-qh07.onrender.com"
-OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/" 
-OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"  
+
+
 OAUTH_CLIENT_ID = get_env('OAUTH_CLIENT_ID')
 OAUTH_CLIENT_SECRET = get_env('OAUTH_CLIENT_SECRET')
 JWT_SECRET_KEY = get_env('JWT_SECRET_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = get_env('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = get_env('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 AVIATIONAPI_KEY = get_env('AVIATIONAPI_KEY')
+SITE_URL = "https://testservice-qh07.onrender.com"
+OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/" 
+OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"  
+
 
 
 
