@@ -50,5 +50,5 @@ urlpatterns = [
     path('api/extract-events-fallback/', extract_events_fallback, name='extract-events-fallback'),
     path("api/fetch-flight-data/", flight_data_view, name="fetch-flight-data"),
     path("api/fetch-stored-flights/", fetch_stored_flights, name="fetch-stored-flights"), 
-    path("create-superuser/", create_superuser_view),
+   
 ]

@@ -1007,17 +1007,3 @@ def fetch_stored_flights(request):
 
 
 
-from django.contrib.auth import get_user_model
-from django.http import HttpResponse
-
-def create_superuser_view(request):
-    User = get_user_model()
-    if User.objects.filter(is_superuser=True).exists():
-        return HttpResponse("Superuser already exists.")
-    
-    User.objects.create_superuser(
-        email="admin@example.com",
-        username="admin",
-        password="adminpassword"
-    )
-    return HttpResponse("Superuser created.")
