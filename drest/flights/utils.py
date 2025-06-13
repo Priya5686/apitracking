@@ -66,7 +66,7 @@ def fetch_flight_info(flight_number: str, dep_date: str, airline_name: str) -> d
     if not airline_iata:
         return {"error": "Unsupported airline name"}
 
-    url = "http://api.aviationstack.com/v1/flights"
+    url = "https://api.aviationstack.com/v1/flights"
     params = {
         "access_key": settings.AVIATIONAPI_KEY,
         "flight_number": flight_number,

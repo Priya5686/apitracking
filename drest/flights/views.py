@@ -5,6 +5,7 @@ from django.shortcuts import render
 from .utils import fetch_flight_info, normalize_date
 from .models import FlightStatusRecord
 import requests
+from django.utils.dateparse import parse_datetime
 
 def flight_form_view(request):
     return render(request, 'flight_form.html')
@@ -33,16 +34,20 @@ def flight_status(request):
                 airline_name=flight_info["airline_name"],
                 departure_airport=flight_info["scheduled_departure_airport"],
                 departure_iata=flight_info["scheduled_departure_code"],
+                departure_time=parse_datetime(flight_info["scheduled_departure_time"]),
                 departure_gate=flight_info["gate_number_departure"],
-                departure_time=flight_info["scheduled_departure_time"],
+                #departure_time=flight_info["scheduled_departure_time"],
                 arrival_airport=flight_info["scheduled_arrival_airport"],
                 arrival_iata=flight_info["scheduled_arrival_code"],
                 arrival_gate=flight_info["arrival_gate"],
                 arrival_baggage_belt=flight_info["arrival_belt_number"],
-                arrival_time=flight_info["scheduled_arrival_time"]
+                arrival_time=parse_datetime(flight_info["scheduled_arrival_time"])
+                #arrival_time=flight_info["scheduled_arrival_time"]
             )
 
             return JsonResponse(flight_info)
+            print("Saving to DB:", flight_info)
+
 
         except requests.HTTPError as http_err:
             return JsonResponse({'error': f'API error: {http_err}'}, status=500)
