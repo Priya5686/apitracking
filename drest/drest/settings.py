@@ -21,6 +21,8 @@ import dj_database_url
 # Detect if running on Render
 RENDER = os.getenv("RENDER") == "1"
 
+SITE_URL = os.getenv('SITE_URL', 'https://testservice-qh07.onrender.com')
+
 if RENDER:
     # Use Render-provided DATABASE_URL
     DATABASES = {
@@ -287,6 +289,7 @@ STATICFILES_DIRS = [
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # For collectstatic on deployment
 
 
+
 #STATIC_URL = '/static/'
 
 #STATICFILES_DIRS = os.path.join[BASE_DIR / "drest" / "static"]
@@ -300,7 +303,7 @@ AUTH_USER_MODEL = 'drestapp.CustomUser'
 
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-SITE_URL = "http://127.0.0.1:8000"
+#SITE_URL = "http://127.0.0.1:8000"
 
 #SESSION_COOKIE_AGE = 1209600  # Two weeks
 #SESSION_ENGINE = 'django.contrib.sessions.backends.db'

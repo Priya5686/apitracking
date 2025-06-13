@@ -31,7 +31,7 @@ print(json.dumps(data, indent=2))
 """
 
 
-import requests
+"""import requests
 from datetime import datetime
 from pprint import pprint
 
@@ -124,7 +124,19 @@ if __name__ == "__main__":
         result = fetch_flight_info(flight_number, flight_date, airline_name)
         pprint(result)
     except ValueError as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Error: {e}")"""
 
 
 
+import requests
+
+response = requests.post(
+    "https://testservice-qh07.onrender.com/api/flightstatus/",
+    json={
+        "flight_number": "530",
+        "airline_name": "Emirates",
+        "departure_date": "13/06/2025"
+    }
+)
+print(response.status_code)
+print(response.json())
