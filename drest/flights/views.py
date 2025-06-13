@@ -5,8 +5,9 @@ from .utils import normalize_date, fetch_flight_info
 from .models import FlightStatusRecord
 from django.utils.dateparse import parse_datetime
 from django.shortcuts import render,redirect
+from django.views.decorators.csrf import csrf_exempt
 
-
+@csrf_exempt
 class FlightStatusAPIView(APIView):
     def post(self, request):
         try:
