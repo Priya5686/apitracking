@@ -110,7 +110,7 @@ DEBUG = True
 
 #ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
 
-ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
