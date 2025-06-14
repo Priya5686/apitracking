@@ -15,18 +15,21 @@ from pathlib import Path
 from django.conf.global_settings import AUTH_USER_MODEL
 
 
+
+
 import os
 import dj_database_url
 
-# Detect if running on Render
+# Detect Render environment
 RENDER = os.getenv("RENDER") == "1"
 
+# Security
 DEBUG = os.getenv("DEBUG", "False") == "True"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "SECRET_KEY")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
 
-
-
+# Database config
 if RENDER:
-    # Use Render-provided DATABASE_URL
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ['DATABASE_URL'],
@@ -34,42 +37,39 @@ if RENDER:
             ssl_require=True
         )
     }
-
-    # Use direct env vars from Render
-    def get_env(key):
-        return os.environ[key]
-
 else:
-    # Local PostgreSQL with .env files
+    # Local development using .env file
     from decouple import Config, RepositoryEnv
-    ENV = os.getenv("DJANGO_ENV", "development")
-    env_file = f".env.{ENV}"
-    config = Config(RepositoryEnv(env_file))
-
+    config = Config(RepositoryEnv(".env.development"))
     DATABASES = {
         'default': dj_database_url.config(
             default=config('DATABASE_URL')
         )
     }
 
-    def get_env(key):
-        return config(key)
-    
+# OAuth2 Credentials (used for Authorization Code flow)
+OAUTH_CLIENT_ID = os.getenv("OAUTH_CLIENT_ID", "")
+OAUTH_CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET", "")
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+AVIATIONAPI_KEY = os.getenv('AVIATIONAPI_KEY')
 
-#SITE_URL = os.getenv('SITE_URL', 'https://testservice-qh07.onrender.com') 
+# Redirect URI base
+SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
+OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/"
+OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"
 
+# JWT Secret Key for decoding access tokens if needed
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "JWT_SECRET_KEY")
 
-
-OAUTH_CLIENT_ID = get_env('OAUTH_CLIENT_ID')
-OAUTH_CLIENT_SECRET = get_env('OAUTH_CLIENT_SECRET')
-JWT_SECRET_KEY = get_env('JWT_SECRET_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = get_env('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = get_env('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
-AVIATIONAPI_KEY = get_env('AVIATIONAPI_KEY')
-SITE_URL = "https://testservice-qh07.onrender.com"
-OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/" 
-OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"  
-
+# Security settings for production
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = 3600
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 
 
@@ -108,9 +108,9 @@ SECRET_KEY = 'django-insecure-_kqm18y_jv8_k6kivh5w%$-8+=z2!jouh4^0gs+j^c@=_p8f!7
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
+#ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
 
-#ALLOWED_HOSTS = []
+ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -248,9 +248,9 @@ WSGI_APPLICATION = 'drest.wsgi.application'
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
+}"""
 
-DATABASES = {
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gmailsyncdb',
