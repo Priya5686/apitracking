@@ -173,7 +173,7 @@ OAUTH2_PROVIDER = {
     'REFRESH_TOKEN_EXPIRE_SECONDS': 86400, # 1 day
     'ROTATE_REFRESH_TOKEN': False,
     'OAUTH2_BACKEND_CLASS':'oauth2_provider.oauth2_backends.OAuthLibCore',
-    'SCOPES': {'read': 'Read scope', 'write': 'Write scope'},
+    'SCOPES': {'read': 'Read access', 'write': 'Write access'},
     'PKCE_REQUIRED': True,
 }
 

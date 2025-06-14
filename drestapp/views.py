@@ -268,6 +268,7 @@ def oauth_callback(request):
         "client_id": settings.OAUTH_CLIENT_ID,
         "client_secret": settings.OAUTH_CLIENT_SECRET,
         "code_verifier": code_verifier,
+        "scope": "read write",
     })
 
     if response.status_code != 200:
