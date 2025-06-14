@@ -248,6 +248,7 @@ def log_event(event_message):
     utc_time = datetime.now(timezone.utc)
     logger.info(f"[{utc_time}] {event_message}")
 
+@csrf_exempt
 def oauth_callback(request):
     code = request.GET.get("code")
     if not code:
