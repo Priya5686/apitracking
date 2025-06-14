@@ -271,7 +271,9 @@ def oauth_callback(request):
     })
 
     if response.status_code != 200:
-        return JsonResponse({"error": "Token exchange failed."}, status=response.status_code)
+        print("❌ Token exchange failed:", response.text)  # Add this line for debugging
+        return JsonResponse({"error": response.text}, status=response.status_code)
+        #return JsonResponse({"error": "Token exchange failed."}, status=response.status_code)
 
     tokens = response.json()
 
