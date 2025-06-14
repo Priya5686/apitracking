@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="auth-wrapper">
+    <form id="register-form" aria-label="User Registration Form" class="auth-form">
+        <p class="sub-heading">Create your account</p>
+        <h2>Register</h2>
+
+        <div class="input-group">
+            <input id="username" type="text" name="username" placeholder="Username" aria-label="Enter your username" required>
+        </div>
+
+        <div class="input-group">
+            <input id="email" type="email" name="email" placeholder="Email address" aria-label="Enter your email address" required>
+        </div>
+
+        <div class="input-group">
+            <input id="password" type="password" name="password" placeholder="Password" aria-label="Enter your password" required>
+        </div>
+
+        <button type="submit" class="primary-btn">Sign up</button>
+
+        <div class="divider">or</div>
+
+        <div class="social-login">
+            <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-btn">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" class="google-icon">
+                Sign up with Google
+            </a>
+        </div>
+
+        <p class="bottom-link">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+    </form>
+</div>
+
+<script src="{% static 'js/register.js' %}"></script>
+</body>
+</html>

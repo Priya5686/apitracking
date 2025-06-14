@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Profile</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .profile-layout {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    form label {
+      font-weight: bold;
+    }
+
+    form input {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    #update-btn {
+      padding: 10px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .nav-links {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .nav-links a {
+      color: #1f2937;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    #status-message {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="profile-layout">
+    <h2>My Account</h2>
+
+    <form id="profile-form">
+      <label>First Name</label>
+      <input type="text" id="first_name" />
+
+      <label>Last Name</label>
+      <input type="text" id="last_name" />
+
+      <button type="button" id="update-btn">Save Profile</button>
+    </form>
+
+    <p id="status-message"></p>
+
+    <div class="nav-links">
+      <a href="/dashboard/">← Back to Dashboard</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </div>
+
+  <script src="{% static 'js/getAccessToken.js' %}"></script>
+  <script src="{% static 'js/logout.js' %}"></script>
+  <script src="{% static 'js/profile.js' %}"></script>
+</body>
+</html>
