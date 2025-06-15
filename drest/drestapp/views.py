@@ -402,7 +402,7 @@ class WhoAmIEndpoint(APIView):
             "role": "admin" if user.is_staff else "user",
             "auth_provider": social.provider if social else "local",
             "social_uid": social.uid if social else None,
-            "has_social_auth": user.social_auth.exists(),
+            "has_social_auth": user.social_auth.exists() if hasattr(user, "social_auth") else False,
         })
 
 

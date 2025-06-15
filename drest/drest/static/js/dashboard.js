@@ -80,13 +80,30 @@ async function loadDashboard() {
     const usernameElement = document.getElementById("username");
     const jsonOutputElement = document.getElementById("json-output");
 
+    if (!cachedAccessToken) {
+        console.warn("No access token found. Redirecting to login.");
+        window.location.href = "/login/";
+        return;
+    }
+
     try {
         const res = await fetchWithAutoRefresh("/api/whoami/", {
             method: "GET",
+            headers: {
+                "Authorization": `Bearer ${cachedAccessToken}`
+            },
             credentials: "include",
         });
 
-        if (!res.ok) throw new Error("Invalid response");
+        if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+                console.warn("Unauthorized or expired token. Redirecting to login.");
+                window.location.href = "/login/";
+                return;
+            }
+            throw new Error("Failed to load user info");
+        }
+
 
         const data = await res.json();
         usernameElement.textContent = data.username || "User";
