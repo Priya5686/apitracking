@@ -1,5 +1,27 @@
 //import { fetchWithAutoRefresh } from './auth.js';
 
+
+let cachedAccessToken = null;
+
+window.addEventListener("DOMContentLoaded", initializeDashboard);
+
+
+
+async function initializeDashboard() {
+    cachedAccessToken = await getAccessToken();
+    if (!cachedAccessToken) {
+        console.warn("No access token found. Redirecting to login.");
+        window.location.href = "/login/";
+        return;
+    }
+
+    await Promise.all([
+        loadDashboard(),
+        loadAIEvents()
+    ]);
+}
+
+
 async function refreshAccessToken() {
     try {
         const res = await fetch("/api/refresh-token/", {
@@ -23,22 +45,26 @@ async function refreshAccessToken() {
 }
 
 async function fetchWithAutoRefresh(url, options = {}) {
-    const accessToken = await getAccessToken();
-
     let res = await fetch(url, {
         ...options,
         credentials: "include",
+        headers: {
+            ...(options.headers || {}),
+            Authorization: `Bearer ${cachedAccessToken}`,
+        },
     });
 
     if (res.status === 401) {
-        console.log("Access token expired. Trying refresh...");
-
         const newToken = await refreshAccessToken();
         if (newToken) {
             // Retry the original request with new access token
             return await fetch(url, {
                 ...options,
                 credentials: "include",
+                headers: {
+                    ...(options.headers || {}),
+                    Authorization: `Bearer ${newToken}`,
+                },
             });
         } else {
             console.warn("Refresh token failed. Redirecting to login...");
@@ -53,9 +79,27 @@ async function fetchWithAutoRefresh(url, options = {}) {
 async function loadDashboard() {
     const usernameElement = document.getElementById("username");
     const jsonOutputElement = document.getElementById("json-output");
-    const accessToken = await getAccessToken();
 
-    if (!accessToken) {
+    try {
+        const res = await fetchWithAutoRefresh("/api/whoami/", {
+            method: "GET",
+            credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("Invalid response");
+
+        const data = await res.json();
+        usernameElement.textContent = data.username || "User";
+        jsonOutputElement.textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+        console.error("Error loading dashboard:", err);
+        usernameElement.textContent = "Unknown User";
+        jsonOutputElement.textContent = "❌ Failed to load user info.";
+    }
+}
+   
+
+    /*if (!accessToken) {
         window.location.href = "/login/";
         return;
     }
@@ -67,7 +111,7 @@ async function loadDashboard() {
                 "Authorization": `Bearer ${accessToken}`
             },
             credentials: "include"
-        });*/
+        });
 
     try {
         const res = await fetchWithAutoRefresh("/api/whoami/", {
@@ -91,10 +135,9 @@ async function loadDashboard() {
         usernameElement.textContent = "Unknown User";
         jsonOutputElement.textContent = "❌ Failed to load user info.";
     }
-}
+}*/
 
 async function loadAIEvents() {
-    const accessToken = await getAccessToken();
     const eventsContainer = document.getElementById("ai-events-output");
 
     if (!accessToken || !eventsContainer) return;
@@ -321,3 +364,6 @@ function displayMessage(message) {
     const container = document.getElementById("flight-data-output");
     container.innerHTML = `<p>${message}</p>`;
 }
+
+
+
