@@ -178,20 +178,16 @@ def generate_code_challenge(verifier):
 
 
 #After deploy login view
-def login_view(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-
-        if not email or not password:
-            return render(request, "login.html", {"error": "Email and password are required."})
-    # Generate PKCE
-    code_verifier = generate_code_verifier()
-    code_challenge = generate_code_challenge(code_verifier)
-    request.session["pkce_verifier"] = code_verifier
+"""def login_view(request):
+     if request.user.is_authenticated:
+         return redirect("/dashboard/")
+     
+     code_verifier = generate_code_verifier()
+     code_challenge = generate_code_challenge(code_verifier)
+     request.session["pkce_verifier"] = code_verifier
 
     # Build authorization URL to your own OAuth2 server
-    auth_url = (
+     auth_url = (
         f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code"
         f"&client_id={settings.OAUTH_CLIENT_ID}"
         f"&redirect_uri={settings.SITE_URL}/oauth/callback/"
@@ -200,7 +196,7 @@ def login_view(request):
         f"&code_challenge_method=S256"
     )
 
-    return redirect(auth_url)
+     return redirect(auth_url)"""
 
 
 def log_event(event_message):
@@ -950,7 +946,7 @@ def fetch_stored_flights(request):
 
 
 #Local host login view
-"""def login_view(request):
+def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -962,9 +958,37 @@ def fetch_stored_flights(request):
         user = authenticate(request, email=email, password=password)
         if not user:
             return render(request, "login.html", {"error": "Invalid credentials"})
+        
+        if not user.email_verified:
+            return render(request, "login.html", {"error": "Please verify your email first."})
 
         # Login user
         login(request, user)
+
+        if next_url and next_url.startswith("/o/authorize"):
+            code_verifier = generate_code_verifier()
+            code_challenge = generate_code_challenge(code_verifier)
+            request.session["pkce_verifier"] = code_verifier
+
+            # Inject code_challenge into next_url
+            separator = '&' if '?' in next_url else '?'
+            next_url += f"{separator}code_challenge={code_challenge}&code_challenge_method=S256"
+            return redirect(next_url)
+        
+        return redirect("/dashboard/")
+
+    
+    if not request.GET.get("force_login"):
+        if request.session.get("access_token") or request.COOKIES.get("access_token"):
+            return redirect("/dashboard/")
+
+    verified = request.GET.get("verified", "").lower() == "true"
+    context = {"verified": verified}
+    return render(request, "login.html", context)
+
+
+        """next_url = request.GET.get("next") or "/dashboard/"
+        return redirect(next_url)
 
         code_verifier = generate_code_verifier()
         code_challenge = generate_code_challenge(code_verifier)
