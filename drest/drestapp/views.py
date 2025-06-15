@@ -354,7 +354,7 @@ def token_from_cookie(request):
         return None
 
 
-class DashboardView(APIView):
+class DashboardApiView(APIView):
     permission_classes = [AllowAny]  
     def get(self, request):
         access_token = request.COOKIES.get("access_token")
