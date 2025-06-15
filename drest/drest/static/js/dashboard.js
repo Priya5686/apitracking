@@ -1,5 +1,7 @@
 window.addEventListener("DOMContentLoaded", initializeDashboard);
 
+let cachedAccessToken = null;
+
 async function initializeDashboard() {
     cachedAccessToken = await getAccessToken();
     if (!cachedAccessToken) {
