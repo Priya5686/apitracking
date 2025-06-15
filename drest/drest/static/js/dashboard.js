@@ -1,6 +1,6 @@
-window.addEventListener("DOMContentLoaded", initializeDashboard);
 
-let cachedAccessToken = null;
+
+//let cachedAccessToken = null;
 
 async function initializeDashboard() {
     cachedAccessToken = await getAccessToken();
@@ -15,6 +15,8 @@ async function initializeDashboard() {
         loadAIEvents()
     ]);
 }
+
+window.addEventListener("DOMContentLoaded", initializeDashboard);
 
 
 async function refreshAccessToken() {

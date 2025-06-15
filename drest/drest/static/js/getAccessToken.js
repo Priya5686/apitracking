@@ -1,4 +1,5 @@
 let cachedAccessToken = null;
+
 async function getAccessToken() {
     if (cachedAccessToken) return cachedAccessToken;
     try {
@@ -18,6 +19,9 @@ async function getAccessToken() {
     }
     return null;
 }
+
+window.getAccessToken = getAccessToken;
+
 function getCSRFToken() {
     return document.cookie
         .split("; ")
