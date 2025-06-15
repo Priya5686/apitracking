@@ -55,7 +55,8 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 AVIATIONAPI_KEY = os.getenv('AVIATIONAPI_KEY')
 
 # Redirect URI base
-SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
+#SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
+SITE_URL = os.getenv("SITE_URL","https://oauthapp-8izz.onrender.com")
 OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/"
 OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"
 
