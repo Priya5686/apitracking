@@ -187,6 +187,12 @@ def generate_code_challenge(verifier):
 
 #After deploy login view
 def login_view(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not email or not password:
+            return render(request, "login.html", {"error": "Email and password are required."})
     # Generate PKCE
     code_verifier = generate_code_verifier()
     code_challenge = generate_code_challenge(code_verifier)
