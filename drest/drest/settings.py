@@ -50,18 +50,31 @@ else:
 # OAuth2 Credentials (used for Authorization Code flow)
 OAUTH_CLIENT_ID = os.getenv("OAUTH_CLIENT_ID", "")
 OAUTH_CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET", "")
+SITE_URL = os.getenv("SITE_URL","https://oauthapp-8izz.onrender.com")
+OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/"
+OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"
+# JWT Secret Key for decoding access tokens if needed
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "JWT_SECRET_KEY")
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_AGE = 1209600  # Two weeks
+
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = 3600  # or higher
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 AVIATIONAPI_KEY = os.getenv('AVIATIONAPI_KEY')
 
 # Redirect URI base
 #SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
-SITE_URL = os.getenv("SITE_URL","https://oauthapp-8izz.onrender.com")
-OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/"
-OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"
 
-# JWT Secret Key for decoding access tokens if needed
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "JWT_SECRET_KEY")
 
 
 #This is working one. If nothing works will fix this
@@ -308,18 +321,7 @@ AUTH_USER_MODEL = 'drestapp.CustomUser'
 
 #SITE_URL = "http://127.0.0.1:8000"
 
-SESSION_COOKIE_AGE = 1209600  # Two weeks
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_SAVE_EVERY_REQUEST = True
 
-
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_HSTS_SECONDS = 3600  # or higher
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

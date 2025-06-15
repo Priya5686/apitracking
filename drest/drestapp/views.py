@@ -255,6 +255,7 @@ def oauth_callback(request):
 
     # Retrieve PKCE code verifier from session
     code_verifier = request.session.pop("pkce_verifier", None)
+    print("verifier from session:", code_verifier)
     if not code_verifier:
         return JsonResponse({"error": "PKCE verifier is required."}, status=400)
 
@@ -269,6 +270,7 @@ def oauth_callback(request):
         "client_secret": settings.OAUTH_CLIENT_SECRET,
         "code_verifier": code_verifier,
     })
+    print("token response:", response.text)
 
     if response.status_code != 200:
         return JsonResponse({"error": "Token exchange failed."}, status=response.status_code)
