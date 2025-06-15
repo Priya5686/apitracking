@@ -987,49 +987,6 @@ def login_view(request):
     return render(request, "login.html", context)
 
 
-        """next_url = request.GET.get("next") or "/dashboard/"
-        return redirect(next_url)
-
-        code_verifier = generate_code_verifier()
-        code_challenge = generate_code_challenge(code_verifier)
-
-        # Save the verifier in session for later use
-        request.session["pkce_verifier"] = code_verifier
-
-
-        print(f"PKCE Code Verifier: {code_verifier}")
-        print(f"PKCE Code Challenge: {code_challenge}")
-
-        # Generate PKCE code verifier and challenge
-        #code_verifier = "random_generated_code_verifier"  # Replace with dynamic generation
-        #code_challenge = generate_code_challenge(code_verifier)
-        #request.session["pkce_verifier"] = code_verifier
-        #print(f"PKCE Code Verifier: {code_verifier}")
-        #print(f"PKCE Code Challenge: {code_challenge}")
-
-        # Redirect to OAuth provider
-        auth_url = (
-            f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code&client_id={settings.OAUTH_CLIENT_ID}"
-            f"&redirect_uri={settings.SITE_URL}/oauth/callback/"
-            f"&scope=read write"
-            f"&code_challenge={code_challenge}"
-            f"&code_challenge_method=S256"
-        )
-        return redirect(auth_url)
-
-
-    if not request.GET.get("force_login"):
-        if request.session.get("access_token") or request.COOKIES.get("access_token"):
-            # Redirect if authenticated
-            return redirect("/dashboard/")
-
-
-    verified = request.GET.get("verified","").lower() == "true"
-    context = {"verified": verified}
-    return render(request, "login.html", context)"""
-
-
-
 #Local host oauth
 """def oauth_callback(request):
     code = request.GET.get("code")
