@@ -1,4 +1,4 @@
-let cachedAccessToken = null;
+//let cachedAccessToken = null;
 
 async function getAccessToken() {
     if (cachedAccessToken) return cachedAccessToken;
