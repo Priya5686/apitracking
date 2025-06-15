@@ -965,6 +965,8 @@ def login_view(request):
         # Login user
         login(request, user)
 
+        next_url = request.GET.get("next")
+
         if next_url and next_url.startswith("/o/authorize"):
             code_verifier = generate_code_verifier()
             code_challenge = generate_code_challenge(code_verifier)
