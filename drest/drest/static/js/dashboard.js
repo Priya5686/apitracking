@@ -73,7 +73,9 @@ async function fetchWithAutoRefresh(url, options = {}) {
 
 
 async function loadDashboard() {
-    const usernameElement = document.getElementById("username");
+    const navbarUsername = document.getElementById("navbar-username");
+    const mainUsername = document.getElementById("main-username");
+    //const usernameElement = document.getElementById("username");
     const jsonOutputElement = document.getElementById("json-output");
 
     if (!cachedAccessToken) {
@@ -102,11 +104,13 @@ async function loadDashboard() {
 
 
         const data = await res.json();
-        usernameElement.textContent = data.username || "User";
+        navbarUsername.textContent = data.username || "User";
+        mainUsername.textContent = data.username || "User";
         jsonOutputElement.textContent = JSON.stringify(data, null, 2);
     } catch (err) {
         console.error("Error loading dashboard:", err);
-        usernameElement.textContent = "Unknown User";
+        navbarUsername.textContent = "Unknown";
+        mainUsername.textContent = "Unknown";
         jsonOutputElement.textContent = "❌ Failed to load user info.";
     }
 }
@@ -244,11 +248,11 @@ async function logout() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+/*document.addEventListener("DOMContentLoaded", () => {
     loadDashboard();
     loadAIEvents(); 
     handleFlightSearch();
-});
+});*/
 
 
 function formatTime(isoString) {
