@@ -177,34 +177,13 @@ def generate_code_challenge(verifier):
     return base64.urlsafe_b64encode(hashed).decode().rstrip("=")
 
 
-#After deploy login view
-"""def login_view(request):
-     if request.user.is_authenticated:
-         return redirect("/dashboard/")
-     
-     code_verifier = generate_code_verifier()
-     code_challenge = generate_code_challenge(code_verifier)
-     request.session["pkce_verifier"] = code_verifier
-
-    # Build authorization URL to your own OAuth2 server
-     auth_url = (
-        f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code"
-        f"&client_id={settings.OAUTH_CLIENT_ID}"
-        f"&redirect_uri={settings.SITE_URL}/oauth/callback/"
-        f"&scope=read write"
-        f"&code_challenge={code_challenge}"
-        f"&code_challenge_method=S256"
-    )
-
-     return redirect(auth_url)"""
-
-
 def log_event(event_message):
     utc_time = datetime.now(timezone.utc)
     logger.info(f"[{utc_time}] {event_message}")
 
+
 #Server Oauth
-def oauth_callback(request):
+"""def oauth_callback(request):
     code = request.GET.get("code")
     code_verifier = request.session.get("pkce_verifier")
 
@@ -228,7 +207,7 @@ def oauth_callback(request):
     response = redirect("/dashboard/")
     response.set_cookie("access_token", tokens["access_token"], httponly=True, samesite="Lax", secure=True)
     response.set_cookie("refresh_token", tokens["refresh_token"], httponly=True, samesite="Lax", secure=True)
-    return response
+    return response"""
 
 
 class CustomAuthorizationView(AuthorizationView):
@@ -300,15 +279,25 @@ def refresh_access_token(request):
         response_data = response.json()
 
         if response.status_code == 200:
-            res = Response({"access_token": response_data.get("access_token")})
+            access = response_data.get("access_token")
+            refresh = response_data.get("refresh_token") or refresh_token
+            res = Response({"access_token": access})
             # Auto-renew cookie
             res.set_cookie(
                 key="access_token",
-                value=response_data.get("access_token"),
+                value=access,
                 httponly=True,
                 max_age=3600,
                 samesite="Lax",
                 secure=not settings.DEBUG
+            )
+            res.set_cookie(
+            key="refresh_token",
+            value=refresh,
+            httponly=True,
+            max_age=86400,
+            samesite="Lax",
+            secure=not settings.DEBUG
             )
             return res
 
@@ -350,7 +339,7 @@ def token_from_cookie(request):
         return None
 
 
-class DashboardApiView(APIView):
+"""class DashboardApiView(APIView):
     permission_classes = [AllowAny]  
     def get(self, request):
         access_token = request.COOKIES.get("access_token")
@@ -369,7 +358,7 @@ class DashboardApiView(APIView):
             "message": f"Welcome to the dashboard!",
             "user_id": user_id,
             "scope": scope
-        })
+        })"""
 
 
 
@@ -531,9 +520,26 @@ class GetAccessTokenView(APIView):
 
     def get(self, request):
         access_token = request.COOKIES.get('access_token')
-        if access_token:
-            return JsonResponse({"access_token": access_token})
-        return JsonResponse({"error": "No access token found."}, status=401)
+        if not access_token:
+            return JsonResponse({"error": "No access token found."}, status=401)
+        
+        try:
+            token = AccessToken.objects.filter(token=access_token).first()
+            if token is None or token.is_expired():
+                return JsonResponse({"error": "Token expired or invalid."}, status=401)
+
+            return JsonResponse({"access_token": token.token})
+        except Exception as e:
+            logger.error(f"Error retrieving access token: {e}")
+            return JsonResponse({"error": "Internal server error"}, status=500)
+
+
+        #if access_token:
+            #return JsonResponse({"access_token": access_token})
+
+
+        
+
 
 
 
@@ -614,7 +620,7 @@ def weather_view(request):
 
 
 
-def oauth_success_redirect(request):
+"""def oauth_success_redirect(request):
     user = request.user
     if not user.is_authenticated:
         return redirect('/login/')
@@ -686,7 +692,7 @@ def oauth_success_redirect(request):
         samesite='Lax',
         secure=False  # change to True in production
     )
-    return response
+    return response"""
 
 
 
@@ -783,6 +789,7 @@ class GoogleOAuthAuthentication(BaseAuthentication):
         # ✅ Find or create user in Django
         user, _ = User.objects.get_or_create(username=email, defaults={"email": email})
         return (user, None)
+    
     
 from django.contrib.auth import login
 
@@ -990,7 +997,7 @@ def login_view(request):
 
 
 #Local host oauth
-"""def oauth_callback(request):
+def oauth_callback(request):
     code = request.GET.get("code")
     if not code:
         return JsonResponse({"error": "Authorization code is required."}, status=400)
@@ -1028,7 +1035,7 @@ def login_view(request):
         httponly=True,
         max_age=3600,
         samesite="Lax",
-        secure=not settings.DEBUG
+        secure=True
     )
     res.set_cookie(
         key="refresh_token",
@@ -1036,9 +1043,9 @@ def login_view(request):
         httponly=True,
         max_age=86400,
         samesite="Lax",
-        secure=not settings.DEBUG
+        secure=True
     )
-    return res"""
+    return res
 
 
 """def validate_access_token(access_token):
@@ -1076,7 +1083,7 @@ def login_view(request):
 
 
 
-"""class DashboardApiView(APIView):
+class DashboardApiView(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
 
@@ -1092,5 +1099,5 @@ def login_view(request):
             "is_staff": user.is_staff,
             #"social_associations": list(social_auths)
         })
-        """
+        
 

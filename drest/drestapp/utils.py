@@ -133,7 +133,7 @@ def extract_events_with_ollama(text):
     return events
 
 
-import json
+"""import json
 import re
 from dateutil.parser import parse as parse_date
 from django.utils import timezone as dj_timezone
@@ -207,6 +207,6 @@ def extract_events_fallback(text):
                 }
                 events.append(parsed_event)
 
-    return json.dumps({"events": events}, indent=2)
+    return json.dumps({"events": events}, indent=2)"""
 
 

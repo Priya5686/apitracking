@@ -27,10 +27,6 @@ async function fetchWithAutoRefresh(url, options = {}) {
 
     let res = await fetch(url, {
         ...options,
-        headers: {
-            ...(options.headers || {}),
-            Authorization: `Bearer ${accessToken}`,
-        },
         credentials: "include",
     });
 
@@ -42,10 +38,6 @@ async function fetchWithAutoRefresh(url, options = {}) {
             // Retry the original request with new access token
             return await fetch(url, {
                 ...options,
-                headers: {
-                    ...(options.headers || {}),
-                    Authorization: `Bearer ${newToken}`,
-                },
                 credentials: "include",
             });
         } else {
