@@ -1,6 +1,3 @@
-//import { fetchWithAutoRefresh } from './auth.js';
-
-
 let cachedAccessToken = null;
 
 window.addEventListener("DOMContentLoaded", initializeDashboard);
