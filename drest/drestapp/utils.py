@@ -1,4 +1,4 @@
-import os
+"""import os
 import json
 import requests
 from django.utils import timezone as dj_timezone
@@ -130,7 +130,7 @@ def extract_events_with_ollama(text):
     except (requests.RequestException, json.JSONDecodeError):
         return []
 
-    return events
+    return events"""
 
 
 """import json
