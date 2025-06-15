@@ -1,4 +1,4 @@
-//let cachedAccessToken = null;
+let cachedAccessToken = null;
 
 async function getAccessToken() {
     if (cachedAccessToken) return cachedAccessToken;
@@ -20,7 +20,7 @@ async function getAccessToken() {
     return null;
 }
 
-window.getAccessToken = getAccessToken;
+
 
 function getCSRFToken() {
     return document.cookie

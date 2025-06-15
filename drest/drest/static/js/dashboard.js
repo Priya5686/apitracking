@@ -1,4 +1,3 @@
-let cachedAccessToken = null;
 
 window.addEventListener("DOMContentLoaded", initializeDashboard);
 
