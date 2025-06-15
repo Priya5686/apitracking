@@ -422,7 +422,7 @@ def refresh_access_token(request):
 
     try:
         response = requests.post(
-            f"{settings.OAUTH_TOKEN_URL}"
+            f"{settings.OAUTH_TOKEN_URL}",
             data=data,
             headers=headers,
             timeout=10
