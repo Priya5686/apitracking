@@ -57,12 +57,6 @@ from drestapp.utils import extract_events_with_ollama, extract_events_fallback
 import logging
 
 
-
-
-
-
-
-
 CustomUser = get_user_model()
 
 def home_view(request):
@@ -175,8 +169,6 @@ def resend_verification_link(request):
         return render(request, "resend_email.html")
 
 
-
-
 def generate_code_verifier():
     return secrets.token_urlsafe(64)
 
@@ -211,66 +203,6 @@ def login_view(request):
     return redirect(auth_url)
 
 
-
-
-#Local host login view
-"""def login_view(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-
-        if not email or not password:
-            return render(request, "login.html", {"error": "Email and password are required."})
-
-        # Authenticate user
-        user = authenticate(request, email=email, password=password)
-        if not user:
-            return render(request, "login.html", {"error": "Invalid credentials"})
-
-        # Login user
-        login(request, user)
-
-        code_verifier = generate_code_verifier()
-        code_challenge = generate_code_challenge(code_verifier)
-
-        # Save the verifier in session for later use
-        request.session["pkce_verifier"] = code_verifier
-
-
-        print(f"PKCE Code Verifier: {code_verifier}")
-        print(f"PKCE Code Challenge: {code_challenge}")
-
-        # Generate PKCE code verifier and challenge
-        #code_verifier = "random_generated_code_verifier"  # Replace with dynamic generation
-        #code_challenge = generate_code_challenge(code_verifier)
-        #request.session["pkce_verifier"] = code_verifier
-        #print(f"PKCE Code Verifier: {code_verifier}")
-        #print(f"PKCE Code Challenge: {code_challenge}")
-
-        # Redirect to OAuth provider
-        auth_url = (
-            f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code&client_id={settings.OAUTH_CLIENT_ID}"
-            f"&redirect_uri={settings.SITE_URL}/oauth/callback/"
-            f"&scope=read write"
-            f"&code_challenge={code_challenge}"
-            f"&code_challenge_method=S256"
-        )
-        return redirect(auth_url)
-
-
-    if not request.GET.get("force_login"):
-        if request.session.get("access_token") or request.COOKIES.get("access_token"):
-            # Redirect if authenticated
-            return redirect("/dashboard/")
-
-
-    verified = request.GET.get("verified","").lower() == "true"
-    context = {"verified": verified}
-    return render(request, "login.html", context)"""
-
-
-
-
 def log_event(event_message):
     utc_time = datetime.now(timezone.utc)
     logger.info(f"[{utc_time}] {event_message}")
@@ -302,56 +234,6 @@ def oauth_callback(request):
     response.set_cookie("refresh_token", tokens["refresh_token"], httponly=True, samesite="Lax", secure=True)
     return response
 
-#Local host oauth
-"""def oauth_callback(request):
-    code = request.GET.get("code")
-    if not code:
-        return JsonResponse({"error": "Authorization code is required."}, status=400)
-
-    # Retrieve PKCE code verifier from session
-    code_verifier = request.session.pop("pkce_verifier", None)
-    #code_verifier = request.session.get("pkce_verifier")
-    print("verifier from session:", code_verifier)
-    if not code_verifier:
-        return JsonResponse({"error": "PKCE verifier is required."}, status=400)
-
-    # Exchange the authorization code for tokens
-    #token_url = "http://127.0.0.1:8000/o/token/"
-    token_url = settings.OAUTH_TOKEN_URL
-    response = requests.post(token_url, data={
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
-        "client_id": settings.OAUTH_CLIENT_ID,
-        "client_secret": settings.OAUTH_CLIENT_SECRET,
-        "code_verifier": code_verifier,
-    })
-    print("token response:", response.text)
-
-    if response.status_code != 200:
-        return JsonResponse({"error": "Token exchange failed."}, status=response.status_code)
-
-    tokens = response.json()
-
-
-    res = redirect("/dashboard/")
-    res.set_cookie(
-        key="access_token",
-        value=tokens.get("access_token"),
-        httponly=True,
-        max_age=3600,
-        samesite="Lax",
-        secure=not settings.DEBUG
-    )
-    res.set_cookie(
-        key="refresh_token",
-        value=tokens.get("refresh_token"),
-        httponly=True,
-        max_age=86400,
-        samesite="Lax",
-        secure=not settings.DEBUG
-    )
-    return res"""
 
 class CustomAuthorizationView(AuthorizationView):
     def dispatch(self, request, *args, **kwargs):
@@ -365,42 +247,34 @@ class CustomAuthorizationView(AuthorizationView):
 
         print("✔️ User entering authorize flow:", user.email)
         return super().dispatch(request, *args, **kwargs)
-
+    
 
 def validate_access_token(access_token):
+    data = {
+        "token": access_token,
+        "token_type_hint": "access_token",
+        "client_id": settings.OAUTH_CLIENT_ID,
+        "client_secret": settings.OAUTH_CLIENT_SECRET,
+    }
+
     try:
-        # Decode JWT token
-        decoded_token = jwt_decode(access_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
-        logger.info(f"Token successfully decoded: {decoded_token}")
+        response = requests.post(
+            f"{settings.SITE_URL}/o/introspect/",
+            data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=5
+        )
 
-        # Validate the expiration (exp) claim
-        expiration = decoded_token.get("exp")
-        expiration_time = datetime.utcfromtimestamp(expiration)
-        logger.debug(f"Token expiration time: {expiration_time}")
-        if not expiration:
-            logger.warning("Token does not have an expiration claim.")
-            return {"status": False, "error": "Missing expiration claim."}
+        if response.status_code == 200:
+            info = response.json()
+            if info.get("active"):
+                return {"status": True, "user_id": info.get("user_id"), "scope": info.get("scope")}
+            return {"status": False, "error": "Inactive or expired token."}
 
-        # Convert expiration timestamp to datetime
-        expiration_time = datetime.utcfromtimestamp(expiration)
-        if expiration_time < datetime.now(timezone.utc):
-            logger.warning(f"Token expired at {expiration_time}.")
-            return {"status": False, "error": "Token expired."}
+        return {"status": False, "error": "Failed to introspect token."}
 
-        logger.info(f"Token is valid. Expiration time: {expiration_time}")
-        return {"status": True, "message": "Token is valid."}
-
-    except ExpiredSignatureError:
-        logger.error("Token has expired.")
-        return {"status": False, "error": "Token has expired."}
-    except InvalidTokenError as e:
-        logger.error(f"Invalid token: {str(e)}")
-        return {"status": False, "error": f"Invalid token: {str(e)}"}
-    except Exception as e:
-        logger.error(f"Unexpected error during token validation: {str(e)}")
-        return {"status": False, "error": f"Unexpected error: {str(e)}"}
-
-
+    except requests.RequestException as e:
+        return {"status": False, "error": f"Token introspection error: {str(e)}"}
 
 logger = logging.getLogger(__name__)
 
@@ -427,21 +301,25 @@ def refresh_access_token(request):
             headers=headers,
             timeout=10
         )
-
-        # Get the JSON whether it's 200 or 400
         response_data = response.json()
 
         if response.status_code == 200:
-            return Response({
-                "access_token": response_data.get("access_token")
-            })
-        else:
-            return Response(response_data, status=response.status_code)
+            res = Response({"access_token": response_data.get("access_token")})
+            # Auto-renew cookie
+            res.set_cookie(
+                key="access_token",
+                value=response_data.get("access_token"),
+                httponly=True,
+                max_age=3600,
+                samesite="Lax",
+                secure=not settings.DEBUG
+            )
+            return res
+
+        return Response(response_data, status=response.status_code)
 
     except requests.RequestException as e:
-        return Response({"error": str(e)}, status=500)
-
-    
+        return Response({"error": f"Refresh request failed: {str(e)}"}, status=500)
 
 
 logger = logging.getLogger(__name__)
@@ -476,22 +354,27 @@ def token_from_cookie(request):
         return None
 
 
-class DashboardApiView(APIView):
-    authentication_classes = [OAuth2Authentication]
-    permission_classes = [IsAuthenticated]
+class DashboardView(APIView):
+    permission_classes = [AllowAny]  
+    def get(self, request):
+        access_token = request.COOKIES.get("access_token")
+        if not access_token:
+            return Response({"error": "Access token missing"}, status=401)
 
-    def get(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return JsonResponse({"error": "Unauthorized"}, status=401)
+        validation = validate_access_token(access_token)
+        if not validation["status"]:
+            return Response({"error": validation["error"]}, status=401)
 
-        #social_auths = UserSocialAuth.objects.filter(user=request.user).values("provider", "uid")
-        user = request.user
-        return JsonResponse({
-            "username": user.username,
-            "email": user.email,
-            "is_staff": user.is_staff,
-            #"social_associations": list(social_auths)
+        user_id = validation.get("user_id")
+        scope = validation.get("scope")
+
+        # Return sample dashboard data
+        return Response({
+            "message": f"Welcome to the dashboard!",
+            "user_id": user_id,
+            "scope": scope
         })
+
 
 
 def dashboard_view(request):
@@ -1065,4 +948,166 @@ def fetch_stored_flights(request):
 
 
 
+
+#Local host login view
+"""def login_view(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not email or not password:
+            return render(request, "login.html", {"error": "Email and password are required."})
+
+        # Authenticate user
+        user = authenticate(request, email=email, password=password)
+        if not user:
+            return render(request, "login.html", {"error": "Invalid credentials"})
+
+        # Login user
+        login(request, user)
+
+        code_verifier = generate_code_verifier()
+        code_challenge = generate_code_challenge(code_verifier)
+
+        # Save the verifier in session for later use
+        request.session["pkce_verifier"] = code_verifier
+
+
+        print(f"PKCE Code Verifier: {code_verifier}")
+        print(f"PKCE Code Challenge: {code_challenge}")
+
+        # Generate PKCE code verifier and challenge
+        #code_verifier = "random_generated_code_verifier"  # Replace with dynamic generation
+        #code_challenge = generate_code_challenge(code_verifier)
+        #request.session["pkce_verifier"] = code_verifier
+        #print(f"PKCE Code Verifier: {code_verifier}")
+        #print(f"PKCE Code Challenge: {code_challenge}")
+
+        # Redirect to OAuth provider
+        auth_url = (
+            f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code&client_id={settings.OAUTH_CLIENT_ID}"
+            f"&redirect_uri={settings.SITE_URL}/oauth/callback/"
+            f"&scope=read write"
+            f"&code_challenge={code_challenge}"
+            f"&code_challenge_method=S256"
+        )
+        return redirect(auth_url)
+
+
+    if not request.GET.get("force_login"):
+        if request.session.get("access_token") or request.COOKIES.get("access_token"):
+            # Redirect if authenticated
+            return redirect("/dashboard/")
+
+
+    verified = request.GET.get("verified","").lower() == "true"
+    context = {"verified": verified}
+    return render(request, "login.html", context)"""
+
+
+
+#Local host oauth
+"""def oauth_callback(request):
+    code = request.GET.get("code")
+    if not code:
+        return JsonResponse({"error": "Authorization code is required."}, status=400)
+
+    # Retrieve PKCE code verifier from session
+    code_verifier = request.session.pop("pkce_verifier", None)
+    #code_verifier = request.session.get("pkce_verifier")
+    print("verifier from session:", code_verifier)
+    if not code_verifier:
+        return JsonResponse({"error": "PKCE verifier is required."}, status=400)
+
+    # Exchange the authorization code for tokens
+    #token_url = "http://127.0.0.1:8000/o/token/"
+    token_url = settings.OAUTH_TOKEN_URL
+    response = requests.post(token_url, data={
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
+        "client_id": settings.OAUTH_CLIENT_ID,
+        "client_secret": settings.OAUTH_CLIENT_SECRET,
+        "code_verifier": code_verifier,
+    })
+    print("token response:", response.text)
+
+    if response.status_code != 200:
+        return JsonResponse({"error": "Token exchange failed."}, status=response.status_code)
+
+    tokens = response.json()
+
+
+    res = redirect("/dashboard/")
+    res.set_cookie(
+        key="access_token",
+        value=tokens.get("access_token"),
+        httponly=True,
+        max_age=3600,
+        samesite="Lax",
+        secure=not settings.DEBUG
+    )
+    res.set_cookie(
+        key="refresh_token",
+        value=tokens.get("refresh_token"),
+        httponly=True,
+        max_age=86400,
+        samesite="Lax",
+        secure=not settings.DEBUG
+    )
+    return res"""
+
+
+"""def validate_access_token(access_token):
+    try:
+        # Decode JWT token
+        decoded_token = jwt_decode(access_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
+        logger.info(f"Token successfully decoded: {decoded_token}")
+
+        # Validate the expiration (exp) claim
+        expiration = decoded_token.get("exp")
+        expiration_time = datetime.utcfromtimestamp(expiration)
+        logger.debug(f"Token expiration time: {expiration_time}")
+        if not expiration:
+            logger.warning("Token does not have an expiration claim.")
+            return {"status": False, "error": "Missing expiration claim."}
+
+        # Convert expiration timestamp to datetime
+        expiration_time = datetime.utcfromtimestamp(expiration)
+        if expiration_time < datetime.now(timezone.utc):
+            logger.warning(f"Token expired at {expiration_time}.")
+            return {"status": False, "error": "Token expired."}
+
+        logger.info(f"Token is valid. Expiration time: {expiration_time}")
+        return {"status": True, "message": "Token is valid."}
+
+    except ExpiredSignatureError:
+        logger.error("Token has expired.")
+        return {"status": False, "error": "Token has expired."}
+    except InvalidTokenError as e:
+        logger.error(f"Invalid token: {str(e)}")
+        return {"status": False, "error": f"Invalid token: {str(e)}"}
+    except Exception as e:
+        logger.error(f"Unexpected error during token validation: {str(e)}")
+        return {"status": False, "error": f"Unexpected error: {str(e)}"}"""
+
+
+
+"""class DashboardApiView(APIView):
+    authentication_classes = [OAuth2Authentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Unauthorized"}, status=401)
+
+        #social_auths = UserSocialAuth.objects.filter(user=request.user).values("provider", "uid")
+        user = request.user
+        return JsonResponse({
+            "username": user.username,
+            "email": user.email,
+            "is_staff": user.is_staff,
+            #"social_associations": list(social_auths)
+        })
+        """
 
