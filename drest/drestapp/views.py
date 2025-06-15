@@ -288,7 +288,7 @@ def oauth_callback(request):
         "code": code,
         "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
         "client_id": settings.OAUTH_CLIENT_ID,
-        "client_secret": settings.OAUTH_CLIENT_SECRET",
+        "client_secret": settings.OAUTH_CLIENT_SECRET,
         "code_verifier": code_verifier,
     })
 
@@ -740,7 +740,7 @@ def oauth_success_redirect(request):
     if not user.is_authenticated:
         return redirect('/login/')
 
-    app = Application.objects.get(name='demo app')
+    app = Application.objects.get(name='testoauth')
 
     now = timezone.now()
     access_token = AccessToken.objects.filter(
