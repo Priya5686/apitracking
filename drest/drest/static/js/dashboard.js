@@ -1,6 +1,4 @@
-
-
-//let cachedAccessToken = null;
+let cachedAccessToken = null;
 
 async function initializeDashboard() {
     cachedAccessToken = await getAccessToken();
