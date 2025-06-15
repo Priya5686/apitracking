@@ -185,9 +185,30 @@ def generate_code_challenge(verifier):
     return base64.urlsafe_b64encode(hashed).decode().rstrip("=")
 
 
-
-
+#After deploy login view
 def login_view(request):
+    # Generate PKCE
+    code_verifier = generate_code_verifier()
+    code_challenge = generate_code_challenge(code_verifier)
+    request.session["pkce_verifier"] = code_verifier
+
+    # Build authorization URL to your own OAuth2 server
+    auth_url = (
+        f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code"
+        f"&client_id={settings.OAUTH_CLIENT_ID}"
+        f"&redirect_uri={settings.SITE_URL}/oauth/callback/"
+        f"&scope=read write"
+        f"&code_challenge={code_challenge}"
+        f"&code_challenge_method=S256"
+    )
+
+    return redirect(auth_url)
+
+
+
+
+#Local host login view
+"""def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -239,7 +260,7 @@ def login_view(request):
 
     verified = request.GET.get("verified","").lower() == "true"
     context = {"verified": verified}
-    return render(request, "login.html", context)
+    return render(request, "login.html", context)"""
 
 
 
@@ -248,13 +269,42 @@ def log_event(event_message):
     utc_time = datetime.now(timezone.utc)
     logger.info(f"[{utc_time}] {event_message}")
 
+#Server Oauth
 def oauth_callback(request):
+    code = request.GET.get("code")
+    code_verifier = request.session.get("pkce_verifier")
+
+    if not code or not code_verifier:
+        return JsonResponse({"error": "Missing code or verifier"}, status=400)
+
+    token_response = requests.post(settings.OAUTH_TOKEN_URL, data={
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
+        "client_id": settings.OAUTH_CLIENT_ID,
+        "client_secret": settings.OAUTH_CLIENT_SECRET",
+        "code_verifier": code_verifier,
+    })
+
+    if token_response.status_code != 200:
+        return JsonResponse({"error": "Token exchange failed"}, status=500)
+
+    tokens = token_response.json()
+
+    response = redirect("/dashboard/")
+    response.set_cookie("access_token", tokens["access_token"], httponly=True, samesite="Lax", secure=True)
+    response.set_cookie("refresh_token", tokens["refresh_token"], httponly=True, samesite="Lax", secure=True)
+    return response
+
+#Local host oauth
+"""def oauth_callback(request):
     code = request.GET.get("code")
     if not code:
         return JsonResponse({"error": "Authorization code is required."}, status=400)
 
     # Retrieve PKCE code verifier from session
     code_verifier = request.session.pop("pkce_verifier", None)
+    #code_verifier = request.session.get("pkce_verifier")
     print("verifier from session:", code_verifier)
     if not code_verifier:
         return JsonResponse({"error": "PKCE verifier is required."}, status=400)
@@ -295,7 +345,7 @@ def oauth_callback(request):
         samesite="Lax",
         secure=not settings.DEBUG
     )
-    return res
+    return res"""
 
 class CustomAuthorizationView(AuthorizationView):
     def dispatch(self, request, *args, **kwargs):
@@ -366,7 +416,7 @@ def refresh_access_token(request):
 
     try:
         response = requests.post(
-            "http://127.0.0.1:8000/o/token/",
+            f"{settings.OAUTH_TOKEN_URL}"
             data=data,
             headers=headers,
             timeout=10
