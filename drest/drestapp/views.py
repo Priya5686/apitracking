@@ -1035,7 +1035,7 @@ def oauth_callback(request):
         httponly=True,
         max_age=3600,
         samesite="Lax",
-        secure=True
+        secure=not settings.DEBUG
     )
     res.set_cookie(
         key="refresh_token",
@@ -1043,7 +1043,7 @@ def oauth_callback(request):
         httponly=True,
         max_age=86400,
         samesite="Lax",
-        secure=True
+        secure=not settings.DEBUG
     )
     return res
 
