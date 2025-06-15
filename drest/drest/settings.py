@@ -62,18 +62,6 @@ OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"
 # JWT Secret Key for decoding access tokens if needed
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "JWT_SECRET_KEY")
 
-# Security settings for production
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_HSTS_SECONDS = 3600
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-
-
-
-
 
 #This is working one. If nothing works will fix this
 
@@ -319,9 +307,9 @@ AUTH_USER_MODEL = 'drestapp.CustomUser'
 
 #SITE_URL = "http://127.0.0.1:8000"
 
-#SESSION_COOKIE_AGE = 1209600  # Two weeks
-#SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-#SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_AGE = 1209600  # Two weeks
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_SAVE_EVERY_REQUEST = True
 
 
 SESSION_COOKIE_SECURE = True

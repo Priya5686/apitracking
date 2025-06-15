@@ -186,7 +186,7 @@ def generate_code_challenge(verifier):
 
 
 
-@csrf_protect
+
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
