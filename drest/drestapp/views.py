@@ -223,8 +223,8 @@ class CustomAuthorizationView(AuthorizationView):
         print("✔️ User entering authorize flow:", user.email)
         return super().dispatch(request, *args, **kwargs)
     
-
-def validate_access_token(access_token):
+# recently changed
+"""def validate_access_token(access_token):
     data = {
         "token": access_token,
         "token_type_hint": "access_token",
@@ -249,7 +249,7 @@ def validate_access_token(access_token):
         return {"status": False, "error": "Failed to introspect token."}
 
     except requests.RequestException as e:
-        return {"status": False, "error": f"Token introspection error: {str(e)}"}
+        return {"status": False, "error": f"Token introspection error: {str(e)}"}"""
 
 logger = logging.getLogger(__name__)
 
@@ -979,17 +979,17 @@ def login_view(request):
             code_challenge = generate_code_challenge(code_verifier)
             request.session["pkce_verifier"] = code_verifier
 
-            # Inject code_challenge into next_url
-            separator = '&' if '?' in next_url else '?'
-            next_url += f"{separator}code_challenge={code_challenge}&code_challenge_method=S256"
-            return redirect(next_url)
-        
-        return redirect("/dashboard/")
+            oauth_params = {
+            "client_id": settings.OAUTH_CLIENT_ID,
+            "response_type": "code",
+            "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
+            "code_challenge": code_challenge,
+            "code_challenge_method": "S256",
+            "scope": "read write",
+        }
 
-    
-    if not request.GET.get("force_login"):
-        if request.session.get("access_token") or request.COOKIES.get("access_token"):
-            return redirect("/dashboard/")
+        oauth_url = f"/o/authorize/?{urlencode(oauth_params)}"
+        return redirect(oauth_url)
 
     verified = request.GET.get("verified", "").lower() == "true"
     context = {"verified": verified}
@@ -1047,8 +1047,8 @@ def oauth_callback(request):
     )
     return res
 
-
-"""def validate_access_token(access_token):
+#local host oauth_access
+def validate_access_token(access_token):
     try:
         # Decode JWT token
         decoded_token = jwt_decode(access_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
@@ -1079,7 +1079,7 @@ def oauth_callback(request):
         return {"status": False, "error": f"Invalid token: {str(e)}"}
     except Exception as e:
         logger.error(f"Unexpected error during token validation: {str(e)}")
-        return {"status": False, "error": f"Unexpected error: {str(e)}"}"""
+        return {"status": False, "error": f"Unexpected error: {str(e)}"}
 
 
 
