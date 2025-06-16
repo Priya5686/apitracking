@@ -2,25 +2,34 @@ let cachedAccessToken = null;
 
 async function getAccessToken() {
     if (cachedAccessToken) return cachedAccessToken;
+
     try {
-        const res = await fetch("/api/get-token/",
-        {
+        const res = await fetch("/api/get-token/", {
             method: "GET",
             credentials: "include",
         });
+
         if (res.ok) {
             const data = await res.json();
-            console.log("✅ Access token fetched:", data.access_token);
-            cachedAccessToken = data.access_token;
-            //return data.access_token;
-            return cachedAccessToken;
+            if (data.access_token) {
+                cachedAccessToken = data.access_token;
+                console.log("✅ Access token fetched:", cachedAccessToken);
+                return cachedAccessToken;
+            } else {
+                console.warn("⚠️ Access token missing in response.");
+            }
+        } else {
+            const error = await res.json();
+            console.warn("❌ Failed to fetch token:", error?.error || res.statusText);
         }
     } catch (err) {
-        console.error("Error fetching access token:", err);
+        console.error("❌ Error during token fetch:", err);
     }
+
+    // Redirect if token is not available
+    window.location.href = "/login/";
     return null;
 }
-
 
 
 function getCSRFToken() {

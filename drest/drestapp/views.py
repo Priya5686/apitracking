@@ -436,11 +436,15 @@ class GetAccessTokenView(APIView):
 
     def get(self, request):
         access_token = request.COOKIES.get('access_token')
+        print("Access token from cookie:", access_token)
+
         if not access_token:
             return JsonResponse({"error": "No access token found."}, status=401)
         
         try:
             token = AccessToken.objects.filter(token=access_token).first()
+            print("Token from DB:", token)
+
             if token is None or token.is_expired():
                 return JsonResponse({"error": "Token expired or invalid."}, status=401)
 

@@ -1,10 +1,6 @@
 async function initializeDashboard() {
     const accessToken = await getAccessToken();
-    if (!accessToken) {
-        console.warn("No access token found. Redirecting to login.");
-        window.location.href = "/login/";
-        return;
-    }
+    if (!accessToken) return;
 
     await Promise.all([
         loadDashboard(accessToken),
@@ -23,8 +19,9 @@ async function refreshAccessToken() {
 
         if (res.ok) {
             const data = await res.json();
-            console.log("🔁 Access token refreshed:", data.access_token);
-            return data.access_token;
+            cachedAccessToken = data.access_token;
+            console.log("🔁 Access token refreshed:", cachedAccessToken);
+            return cachedAccessToken;
         } else {
             console.warn("⚠️ Refresh token request failed.");
         }
@@ -73,15 +70,12 @@ async function loadDashboard(token) {
     try {
         const res = await fetchWithAutoRefresh("/api/whoami/", {
             method: "GET",
-            credentials: "include",
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
 
-        if (!res.ok) {
-            throw new Error("Failed to load user info.");
-        }
+        if (!res.ok) throw new Error("Failed to load user info.");
 
         const data = await res.json();
         usernameTop.textContent = data.username || "User";
@@ -102,7 +96,6 @@ async function loadAIEvents(token) {
     try {
         const res = await fetchWithAutoRefresh("/api/gmail-events/", {
             method: "GET",
-            credentials: "include",
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -135,7 +128,7 @@ async function logout() {
     try {
         const res = await fetch("/api/logout/", {
             method: "POST",
-             headers: {
+            headers: {
                 "Authorization": `Bearer ${accessToken}`,
                 "X-CSRFToken": csrfToken
             },
@@ -143,22 +136,13 @@ async function logout() {
         });
 
         if (res.ok) {
-            //window.location.href = "/home/";
-              window.location.href  = "/";
+            window.location.href = "/";
         } else {
             console.error("❌ Logout failed:", res.status);
         }
     } catch (err) {
         console.error("❌ Error during logout:", err);
     }
-}
-
-/*document.addEventListener("DOMContentLoaded", () => {
-    loadDashboard();
-    loadAIEvents(); 
-    handleFlightSearch();
-});*/
-
 
 function formatTime(isoString) {
     if (!isoString) return null;
@@ -169,7 +153,7 @@ function formatTime(isoString) {
 }
 
 
-document.addEventListener("DOMContentLoaded", async () => {
+/*document.addEventListener("DOMContentLoaded", async () => {
     await loadFallbackEvents();
 });
 
@@ -211,7 +195,7 @@ async function loadFallbackEvents() {
         console.error("❌ Error loading fallback events:", err);
         eventsContainer.innerHTML = `<p>Error retrieving fallback events.</p>`;
     }
-}
+}*/
 
 
 async function handleFlightSearch() {
