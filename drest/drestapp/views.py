@@ -182,34 +182,6 @@ def log_event(event_message):
     logger.info(f"[{utc_time}] {event_message}")
 
 
-#Server Oauth
-"""def oauth_callback(request):
-    code = request.GET.get("code")
-    code_verifier = request.session.get("pkce_verifier")
-
-    if not code or not code_verifier:
-        return JsonResponse({"error": "Missing code or verifier"}, status=400)
-
-    token_response = requests.post(settings.OAUTH_TOKEN_URL, data={
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
-        "client_id": settings.OAUTH_CLIENT_ID,
-        "client_secret": settings.OAUTH_CLIENT_SECRET,
-        "code_verifier": code_verifier,
-    })
-
-    if token_response.status_code != 200:
-        return JsonResponse({"error": "Token exchange failed"}, status=500)
-
-    tokens = token_response.json()
-
-    response = redirect("/dashboard/")
-    response.set_cookie("access_token", tokens["access_token"], httponly=True, samesite="Lax", secure=True)
-    response.set_cookie("refresh_token", tokens["refresh_token"], httponly=True, samesite="Lax", secure=True)
-    return response"""
-
-
 class CustomAuthorizationView(AuthorizationView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
@@ -223,36 +195,6 @@ class CustomAuthorizationView(AuthorizationView):
         print("✔️ User entering authorize flow:", user.email)
         return super().dispatch(request, *args, **kwargs)
     
-# recently changed
-def validate_access_token(access_token):
-    data = {
-        "token": access_token,
-        "token_type_hint": "access_token",
-        "client_id": settings.OAUTH_CLIENT_ID,
-        "client_secret": settings.OAUTH_CLIENT_SECRET,
-    }
-
-    try:
-        response = requests.post(
-            f"{settings.SITE_URL}/o/introspect/",
-            data=data,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=5
-        )
-
-        if response.status_code == 200:
-            info = response.json()
-            if info.get("active"):
-                return {"status": True, "user_id": info.get("user_id"), "scope": info.get("scope")}
-            return {"status": False, "error": "Inactive or expired token."}
-
-        return {"status": False, "error": "Failed to introspect token."}
-
-    except requests.RequestException as e:
-        return {"status": False, "error": f"Token introspection error: {str(e)}"}
-
-logger = logging.getLogger(__name__)
-
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -339,32 +281,8 @@ def token_from_cookie(request):
         return None
 
 
-"""class DashboardApiView(APIView):
-    permission_classes = [AllowAny]  
-    def get(self, request):
-        access_token = request.COOKIES.get("access_token")
-        if not access_token:
-            return Response({"error": "Access token missing"}, status=401)
-
-        validation = validate_access_token(access_token)
-        if not validation["status"]:
-            return Response({"error": validation["error"]}, status=401)
-
-        user_id = validation.get("user_id")
-        scope = validation.get("scope")
-
-        # Return sample dashboard data
-        return Response({
-            "message": f"Welcome to the dashboard!",
-            "user_id": user_id,
-            "scope": scope
-        })"""
-
-
-
 def dashboard_view(request):
     return render(request, "dashboard.html")
-
 
 
 class AccountView(APIView):
@@ -511,10 +429,6 @@ def reset_password_view(request, uidb64, token):
         return redirect('forgot-password')
 
 
-
-
-
-
 class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
 
@@ -536,13 +450,6 @@ class GetAccessTokenView(APIView):
 
         #if access_token:
             #return JsonResponse({"access_token": access_token})
-
-
-        
-
-
-
-
 
 
 class WeatherAPIView(APIView):
@@ -576,48 +483,6 @@ class WeatherAPIView(APIView):
 
 def weather_view(request):
     return render(request, "weather.html")
-
-
-#@csrf_protect
-#@require_POST
-"""def store_pkce_verifier(request):
-    try:
-        body = json.loads(request.body)
-        verifier = body.get("verifier")
-        if not verifier:
-            return JsonResponse({"error": "Missing verifier"}, status=400)
-
-        print(f"CSRF token received: {request.META.get('HTTP_X_CSRFTOKEN')}")
-
-        # Store the PKCE verifier in session for server-side handling
-        request.session["pkce_verifier"] = verifier
-        # Set secure, HttpOnly cookie for additional storage
-        response = JsonResponse({"status": "ok"})
-        response.set_cookie(
-            key="pkce_verifier",
-            value=verifier,
-            max_age=300,  # Short-lived cookie
-            httponly=True,  # Prevent JS access (XSS mitigation)
-            secure=not settings.DEBUG,  # Secure flag for production
-            samesite="Lax"  # Prevent CSRF attacks
-        )
-        print("✅ Stored verifier in session and cookie:", verifier)
-        return response
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON format"}, status=400)
-    except Exception as e:
-        print("❌ Error storing verifier:", str(e))
-        return JsonResponse({"error": "Server error"}, status=500)"""
-
-"""class DashboardAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({
-            "username": request.user.username,
-            "email": request.user.email,
-        })"""
-
 
 
 """def oauth_success_redirect(request):
@@ -947,11 +812,6 @@ def fetch_stored_flights(request):
     return JsonResponse({"flights": flight_data})
 
 
-
-
-
-
-
 #Local host login view
 def login_view(request):
     if request.method == "POST":
@@ -1101,3 +961,38 @@ class DashboardApiView(APIView):
         })
         
 
+import requests
+from django.conf import settings
+
+def validate_access_token(access_token):
+    data = {
+        "token": access_token,
+        "token_type_hint": "access_token",
+        "client_id": settings.OAUTH_CLIENT_ID,
+        "client_secret": settings.OAUTH_CLIENT_SECRET,
+    }
+
+    try:
+        response = requests.post(
+            f"{settings.SITE_URL}/o/introspect/",
+            data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=5
+        )
+
+        if response.status_code == 200:
+            info = response.json()
+            if info.get("active"):
+                return {
+                    "status": True,
+                    "user_id": info.get("user_id"),
+                    "scope": info.get("scope"),
+                    "username": info.get("username"),
+                    "client_id": info.get("client_id"),
+                }
+            return {"status": False, "error": "Token inactive or expired."}
+
+        return {"status": False, "error": f"Failed introspect: {response.status_code}"}
+
+    except requests.RequestException as e:
+        return {"status": False, "error": f"Token introspection error: {str(e)}"}

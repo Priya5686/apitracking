@@ -1,3 +1,4 @@
+from urllib.parse import urlencode
 import uuid
 import os
 import secrets
@@ -10,8 +11,6 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from dateutil.parser import parse as parse_date
 import re
-from urllib.parse import urlencode
-
 
 from django.conf import settings
 from django.shortcuts import render, redirect
@@ -34,10 +33,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import NotFound
 
-
 from rest_framework.authentication import BaseAuthentication
 from django.contrib.auth.models import User
-
 
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 from oauth2_provider.views import AuthorizationView, TokenView
@@ -57,12 +54,6 @@ from drestapp.models import (
 from drestapp.serializers import RegisterSerializer, AccountSerializer
 from drestapp.utils import extract_events_with_ollama, extract_events_fallback
 import logging
-
-
-
-
-
-
 
 
 CustomUser = get_user_model()
@@ -683,7 +674,7 @@ def weather_view(request):
 
 
 
-def oauth_success_redirect(request):
+"""def oauth_success_redirect(request):
     user = request.user
     if not user.is_authenticated:
         return redirect('/login/')
@@ -755,7 +746,7 @@ def oauth_success_redirect(request):
         samesite='Lax',
         secure=False  # change to True in production
     )
-    return response
+    return response"""
 
 
 
