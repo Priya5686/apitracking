@@ -849,9 +849,13 @@ def login_view(request):
             "code_challenge_method": "S256",
             "scope": "read write",
         }
+            oauth_url = f"/o/authorize/?{urlencode(oauth_params)}"
+            return redirect(oauth_url)
+        return redirect("/dashboard/")
 
-        oauth_url = f"/o/authorize/?{urlencode(oauth_params)}"
-        return redirect(oauth_url)
+    if not request.GET.get("force_login"):
+        if request.session.get("access_token") or request.COOKIES.get("access_token"):
+            return redirect("/dashboard/")
 
     verified = request.GET.get("verified", "").lower() == "true"
     context = {"verified": verified}
