@@ -224,7 +224,7 @@ class CustomAuthorizationView(AuthorizationView):
         return super().dispatch(request, *args, **kwargs)
     
 # recently changed
-"""def validate_access_token(access_token):
+def validate_access_token(access_token):
     data = {
         "token": access_token,
         "token_type_hint": "access_token",
@@ -249,7 +249,7 @@ class CustomAuthorizationView(AuthorizationView):
         return {"status": False, "error": "Failed to introspect token."}
 
     except requests.RequestException as e:
-        return {"status": False, "error": f"Token introspection error: {str(e)}"}"""
+        return {"status": False, "error": f"Token introspection error: {str(e)}"}
 
 logger = logging.getLogger(__name__)
 
@@ -1048,7 +1048,7 @@ def oauth_callback(request):
     return res
 
 #local host oauth_access
-def validate_access_token(access_token):
+"""def validate_access_token(access_token):
     try:
         # Decode JWT token
         decoded_token = jwt_decode(access_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
@@ -1079,7 +1079,7 @@ def validate_access_token(access_token):
         return {"status": False, "error": f"Invalid token: {str(e)}"}
     except Exception as e:
         logger.error(f"Unexpected error during token validation: {str(e)}")
-        return {"status": False, "error": f"Unexpected error: {str(e)}"}
+        return {"status": False, "error": f"Unexpected error: {str(e)}"}"""
 
 
 
