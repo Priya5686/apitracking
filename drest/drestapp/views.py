@@ -815,7 +815,14 @@ def fetch_stored_flights(request):
 
 
 #Local host login view
+from urllib.parse import urlencode  # ✅ Make sure this is at the top of views.py
+
+@csrf_protect
 def login_view(request):
+    # ✅ Redirect if already logged in
+    if request.user.is_authenticated:
+        return redirect("/dashboard/")
+
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -823,43 +830,44 @@ def login_view(request):
         if not email or not password:
             return render(request, "login.html", {"error": "Email and password are required."})
 
-        # Authenticate user
         user = authenticate(request, email=email, password=password)
         if not user:
             return render(request, "login.html", {"error": "Invalid credentials"})
-        
+
         if not user.email_verified:
             return render(request, "login.html", {"error": "Please verify your email first."})
 
-        # Login user
         login(request, user)
 
+        # Check for OAuth2 PKCE redirect
         next_url = request.GET.get("next")
-
         if next_url and next_url.startswith("/o/authorize"):
             code_verifier = generate_code_verifier()
             code_challenge = generate_code_challenge(code_verifier)
             request.session["pkce_verifier"] = code_verifier
 
             oauth_params = {
-            "client_id": settings.OAUTH_CLIENT_ID,
-            "response_type": "code",
-            "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
-            "code_challenge": code_challenge,
-            "code_challenge_method": "S256",
-            "scope": "read write",
-        }
+                "client_id": settings.OAUTH_CLIENT_ID,
+                "response_type": "code",
+                "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
+                "code_challenge": code_challenge,
+                "code_challenge_method": "S256",
+                "scope": "read write",
+            }
+
             oauth_url = f"/o/authorize/?{urlencode(oauth_params)}"
             return redirect(oauth_url)
+
+        # Default: logged in successfully → dashboard
         return redirect("/dashboard/")
 
+    # GET request fallback logic
     if not request.GET.get("force_login"):
         if request.session.get("access_token") or request.COOKIES.get("access_token"):
             return redirect("/dashboard/")
 
     verified = request.GET.get("verified", "").lower() == "true"
-    context = {"verified": verified}
-    return render(request, "login.html", context)
+    return render(request, "login.html", {"verified": verified})
 
 
 #Local host oauth
