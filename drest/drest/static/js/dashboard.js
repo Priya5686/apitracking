@@ -1,22 +1,18 @@
-
-window.addEventListener("DOMContentLoaded", initializeDashboard);
-
-
 async function initializeDashboard() {
-    cachedAccessToken = await getAccessToken();
-    if (!cachedAccessToken) {
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
         console.warn("No access token found. Redirecting to login.");
         window.location.href = "/login/";
         return;
     }
 
     await Promise.all([
-        loadDashboard(),
-        loadAIEvents()
+        loadDashboard(accessToken),
+        loadAIEvents(accessToken)
     ]);
 }
 
-
+window.addEventListener("DOMContentLoaded", initializeDashboard);
 
 async function refreshAccessToken() {
     try {
@@ -27,34 +23,33 @@ async function refreshAccessToken() {
 
         if (res.ok) {
             const data = await res.json();
-            cachedAccessToken = data.access_token; 
-            //return data.access_token;
-            return cachedAccessToken;
+            console.log("🔁 Access token refreshed:", data.access_token);
+            return data.access_token;
         } else {
-            const errData = await res.json();
-            console.warn("Refresh token failed:", errData);
+            console.warn("⚠️ Refresh token request failed.");
         }
     } catch (err) {
-        console.error("Network error during refresh:", err);
+        console.error("❌ Error during token refresh:", err);
     }
     return null;
 }
 
 async function fetchWithAutoRefresh(url, options = {}) {
+    let token = await getAccessToken();
     let res = await fetch(url, {
         ...options,
         credentials: "include",
         headers: {
             ...(options.headers || {}),
-            Authorization: `Bearer ${cachedAccessToken}`,
+            Authorization: `Bearer ${token}`,
         },
     });
 
     if (res.status === 401) {
+        console.warn("⏳ Token expired. Refreshing...");
         const newToken = await refreshAccessToken();
         if (newToken) {
-            // Retry the original request with new access token
-            return await fetch(url, {
+            res = await fetch(url, {
                 ...options,
                 credentials: "include",
                 headers: {
@@ -63,7 +58,6 @@ async function fetchWithAutoRefresh(url, options = {}) {
                 },
             });
         } else {
-            console.warn("Refresh token failed. Redirecting to login...");
             window.location.href = "/login/";
         }
     }
@@ -71,157 +65,68 @@ async function fetchWithAutoRefresh(url, options = {}) {
     return res;
 }
 
-
-async function loadDashboard() {
-    const navbarUsername = document.getElementById("navbar-username");
-    const mainUsername = document.getElementById("main-username");
-    //const usernameElement = document.getElementById("username");
-    const jsonOutputElement = document.getElementById("json-output");
-
-    if (!cachedAccessToken) {
-        console.warn("No access token found. Redirecting to login.");
-        window.location.href = "/login/";
-        return;
-    }
+async function loadDashboard(token) {
+    const usernameTop = document.getElementById("navbar-username");
+    const usernameMain = document.getElementById("main-username");
+    const jsonOutput = document.getElementById("json-output");
 
     try {
         const res = await fetchWithAutoRefresh("/api/whoami/", {
             method: "GET",
-            headers: {
-                "Authorization": `Bearer ${cachedAccessToken}`
-            },
             credentials: "include",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
 
         if (!res.ok) {
-            if (res.status === 401 || res.status === 403) {
-                console.warn("Unauthorized or expired token. Redirecting to login.");
-                window.location.href = "/login/";
-                return;
-            }
-            throw new Error("Failed to load user info");
+            throw new Error("Failed to load user info.");
         }
 
-
         const data = await res.json();
-        navbarUsername.textContent = data.username || "User";
-        mainUsername.textContent = data.username || "User";
-        jsonOutputElement.textContent = JSON.stringify(data, null, 2);
+        usernameTop.textContent = data.username || "User";
+        usernameMain.textContent = data.username || "User";
+        jsonOutput.textContent = JSON.stringify(data, null, 2);
     } catch (err) {
-        console.error("Error loading dashboard:", err);
-        navbarUsername.textContent = "Unknown";
-        mainUsername.textContent = "Unknown";
-        jsonOutputElement.textContent = "❌ Failed to load user info.";
+        console.error("❌ loadDashboard error:", err);
+        usernameTop.textContent = "Unknown";
+        usernameMain.textContent = "Unknown";
+        jsonOutput.textContent = "❌ Failed to load user info.";
     }
 }
-   
 
-    /*if (!accessToken) {
-        window.location.href = "/login/";
-        return;
-    }
-
-    /*try {
-        const res = await fetch("/api/whoami/", {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`
-            },
-            credentials: "include"
-        });
-
-    try {
-        const res = await fetchWithAutoRefresh("/api/whoami/", {
-            method: "GET",
-            //headers: {
-                //"Authorization": `Bearer ${accessToken}`
-            //},
-            credentials: "include"
-        });
-
-
-        if (res.status === 403 || res.status === 401) {
-            window.location.href = "/login/";
-            return;
-        }
-        const data = await res.json();
-        usernameElement.textContent = data.username || "User";
-        jsonOutputElement.textContent = JSON.stringify(data, null, 2); // ✨ Pretty-print the full JSON
-        } catch (err) {
-        console.error("Error loading dashboard:", err);
-        usernameElement.textContent = "Unknown User";
-        jsonOutputElement.textContent = "❌ Failed to load user info.";
-    }
-}*/
-
-async function loadAIEvents() {
-    const eventsContainer = document.getElementById("ai-events-output");
-
-    if (!accessToken || !eventsContainer) return;
+async function loadAIEvents(token) {
+    const container = document.getElementById("ai-events-output");
+    container.innerHTML = "Loading...";
 
     try {
         const res = await fetchWithAutoRefresh("/api/gmail-events/", {
-           method: "GET",
-           headers: {
-               "Authorization": `Bearer ${accessToken}`
-            },
-            credentials: "include"
+            method: "GET",
+            credentials: "include",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
 
-        if (!res.ok) {
-            eventsContainer.innerHTML = `<p>Could not load AI events</p>`;
+        const data = await res.json();
+        const events = data.events || [];
+
+        if (!events.length) {
+            container.innerHTML = "<p>No AI-detected events found.</p>";
             return;
         }
 
-        //const events = await res.json();
-        const responseData = await res.json();
-        const events = responseData.events || [];
-        if (!Array.isArray(events) || events.length === 0) {
-            eventsContainer.innerHTML = `<p>No upcoming events detected in recent emails.</p>`;
-            return;
-        }
-
+        container.innerHTML = "";
         events.forEach(event => {
-            console.log("👀 Event from backend:", event);
-
-            const block = document.createElement("pre");
-            block.classList.add("ai-email-event");
-
-            const type = event.type || "Event";
-            const description = event.description || "No description";
-            //const notes = event.notes || "—";
-
-            const start = event.start
-                ? new Date(event.start).toLocaleString(undefined, {
-                    timeZoneName: 'short',
-                    hour12: true
-                })
-                : 'TBD';
-
-            const end = event.end
-                ? new Date(event.end).toLocaleString(undefined, {
-                    timeZoneName: 'short',
-                    hour12: true
-                })
-                : "TBD";
-
-            // JSON-style output (safe for now)
-            block.textContent = JSON.stringify({
-                type,
-                description,
-                start,
-                end,
-            }, null, 2); // pretty-print
-
-            eventsContainer.appendChild(block);
+            const pre = document.createElement("pre");
+            pre.textContent = JSON.stringify(event, null, 2);
+            container.appendChild(pre);
         });
-
     } catch (err) {
-        console.error("Failed to fetch AI events:", err);
-        eventsContainer.innerHTML = `<p>Error loading AI events.</p>`;
+        console.error("❌ loadAIEvents error:", err);
+        container.innerHTML = "<p>Error loading AI events.</p>";
     }
 }
-
 
 async function logout() {
     const csrfToken = getCSRFToken();

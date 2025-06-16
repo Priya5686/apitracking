@@ -10,6 +10,7 @@ async function getAccessToken() {
         });
         if (res.ok) {
             const data = await res.json();
+            console.log("✅ Access token fetched:", data.access_token);
             cachedAccessToken = data.access_token;
             //return data.access_token;
             return cachedAccessToken;
