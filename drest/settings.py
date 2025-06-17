@@ -188,6 +188,8 @@ OAUTH2_PROVIDER = {
     'OAUTH2_BACKEND_CLASS':'oauth2_provider.oauth2_backends.OAuthLibCore',
     'SCOPES': {'read': 'Read access', 'write': 'Write access'},
     'PKCE_REQUIRED': True,
+    'ALLOW_SCOPES_FOR_PUBLIC_CLIENTS': True,
+
 }
 
 SOCIAL_AUTH_PIPELINE = (
