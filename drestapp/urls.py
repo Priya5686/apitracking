@@ -45,7 +45,7 @@ urlpatterns = [
     path('api/weather/', WeatherAPIView.as_view(), name='weather'),
     path('weather/', weather_view, name='weather'),
     #after login,validates the token
-    path('oauth/success/', oauth_success_redirect, name='oauth-success'),
+    #path('oauth/success/', oauth_success_redirect, name='oauth-success'),
     path('api/gmail-events/', GmailEventDetectionView.as_view(), name='gmail-events'),
     path('api/extract-events-fallback/', extract_events_fallback, name='extract-events-fallback'),
     path("api/fetch-flight-data/", flight_data_view, name="fetch-flight-data"),
