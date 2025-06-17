@@ -55,6 +55,8 @@ OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/"
 OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"
 # JWT Secret Key for decoding access tokens if needed
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "JWT_SECRET_KEY")
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_SECURE = True

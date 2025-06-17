@@ -10,7 +10,9 @@ from django.views.decorators.http import require_http_methods
 from django.conf import settings
 
 def flight_form_view(request):
-    return render(request, 'flight_form.html')
+    return render(request, 'flight_status.html', {
+        'vapid_public_key': settings.VAPID_PUBLIC_KEY
+    })
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -109,7 +111,8 @@ def rapidapi_webhook(request):
     except Exception as e:
         print("❌ Webhook processing error:", str(e))
         return JsonResponse({"error": "Invalid webhook data."}, status=400)
+    
 
 
 
-    #return JsonResponse({'error': 'Invalid method'}, status=405)
+#return JsonResponse({'error': 'Invalid method'}, status=405)
