@@ -6,11 +6,14 @@ from .utils import fetch_flight_info, normalize_date
 from .models import FlightStatusRecord
 import requests
 from django.utils.dateparse import parse_datetime
+from django.views.decorators.http import require_http_methods
+from django.conf import settings
 
 def flight_form_view(request):
     return render(request, 'flight_form.html')
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def flight_status(request):
     if request.method == 'POST':
         try:
@@ -26,13 +29,24 @@ def flight_status(request):
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
 
             dep_date = normalize_date(departure_date)
+
+            existing = FlightStatusRecord.objects.filter(
+            flight_number=flight_number,
+            airline_name=airline_name,
+            departure_time__date=dep_date
+        ).first()
+            
+            if existing:
+                  return JsonResponse({"message": "Flight already exists", "id": existing.id})
+            
+
             flight_info = fetch_flight_info(flight_number, dep_date, airline_name)
 
             if "error" in flight_info:
                 return JsonResponse({'error': flight_info["error"]}, status=404)
 
             # Save to DB
-            FlightStatusRecord.objects.create(
+            record = FlightStatusRecord.objects.create(
                 flight_number=flight_info["flight_number"],
                 airline_name=flight_info["airline_name"],
                 departure_airport=flight_info["scheduled_departure_airport"],
@@ -48,6 +62,20 @@ def flight_status(request):
                 #arrival_time=flight_info["scheduled_arrival_time"]
             )
 
+              # Register webhook to RapidAPI
+            subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{record.airline_name}{record.flight_number}"
+            payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
+            headers = {
+                "x-rapidapi-key": settings.RAPIDAPI_KEY,
+                "x-rapidapi-host": "aerodatabox.p.rapidapi.com",
+                "Content-Type": "application/json"
+            }
+
+            sub_response = requests.post(subscribe_url, json=payload, headers=headers)
+            print("Webhook subscription response:", sub_response.text)
+
+            return JsonResponse({"message": "Flight info saved", "flight": flight_info})
+
             return JsonResponse(flight_info)
             print("Saving to DB:", flight_info)
 
@@ -56,5 +84,32 @@ def flight_status(request):
             return JsonResponse({'error': f'API error: {http_err}'}, status=500)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+        
 
-    return JsonResponse({'error': 'Invalid method'}, status=405)
+@csrf_exempt
+@require_http_methods(["POST"])
+def rapidapi_webhook(request):
+    try:
+        payload = json.loads(request.body)
+        print("📥 Webhook received:", payload)
+
+        # Extract relevant fields
+        flight_id = payload.get("flight", {}).get("number")
+        updated_info = {
+            # Map fields as needed
+            "departure_gate": payload.get("departure", {}).get("gate"),
+            "arrival_gate": payload.get("arrival", {}).get("gate"),
+            "arrival_baggage_belt": payload.get("arrival", {}).get("baggage"),
+        }
+
+        updated = FlightStatusRecord.objects.filter(flight_number=flight_id).update(**updated_info)
+        print("✅ Updated flight records:", updated)
+        return JsonResponse({"message": "Flight update processed."})
+
+    except Exception as e:
+        print("❌ Webhook processing error:", str(e))
+        return JsonResponse({"error": "Invalid webhook data."}, status=400)
+
+
+
+    #return JsonResponse({'error': 'Invalid method'}, status=405)

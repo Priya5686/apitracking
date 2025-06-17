@@ -437,6 +437,8 @@ class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        print("Session token:", request.session.get('access_token'))
+        print("Cookie token:", request.COOKIES.get('access_token'))
         #access_token = request.COOKIES.get('access_token')
         access_token = request.session.get('access_token') or request.COOKIES.get('access_token')
         print("Session token:", request.session.get('access_token'))
