@@ -51,6 +51,7 @@ AIRLINE_MAP = {
     "SpiceJet": "SG",
     "Air Arabia": "G9",
     "American Airlines": "AA",
+    "KLM": "KL",  
 }
 
 def normalize_date(date_input: str) -> str:
