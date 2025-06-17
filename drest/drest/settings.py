@@ -131,10 +131,7 @@ INSTALLED_APPS = [
     'flights',
 ]
 
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "https://oauthapp-8izz.onrender.com",
-]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -161,6 +158,10 @@ AUTHENTICATION_BACKENDS = (
 )
 
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://oauthapp-8izz.onrender.com",
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
