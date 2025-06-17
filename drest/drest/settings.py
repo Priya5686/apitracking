@@ -133,7 +133,7 @@ INSTALLED_APPS = [
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://oauthapp-8izz.onrender.com"
+    "https://oauthapp-8izz.onrender.com",
 ]
 
 MIDDLEWARE = [
