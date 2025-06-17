@@ -7,6 +7,7 @@ async function getAccessToken() {
         const res = await fetch("/api/get-token/", {
             method: "GET",
             credentials: "include",
+            cache: "no-store" 
         });
 
         if (res.ok) {

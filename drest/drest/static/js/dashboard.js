@@ -70,6 +70,8 @@ async function loadDashboard(token) {
     try {
         const res = await fetchWithAutoRefresh("/api/whoami/", {
             method: "GET",
+            credentials: "include",
+            cache: "no-store",
             headers: {
                 Authorization: `Bearer ${token}`
             }

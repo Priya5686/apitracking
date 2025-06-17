@@ -435,7 +435,10 @@ class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        access_token = request.COOKIES.get('access_token')
+        #access_token = request.COOKIES.get('access_token')
+        access_token = request.session.get('access_token') or request.COOKIES.get('access_token')
+        print("Session token:", request.session.get('access_token'))
+        print("Cookie token:", request.COOKIES.get('access_token'))
         print("Access token from cookie:", access_token)
 
         if not access_token:
@@ -905,6 +908,8 @@ def oauth_callback(request):
 
     tokens = response.json()
 
+    request.session["access_token"] = tokens.get("access_token")
+
 
     res = redirect("/dashboard/")
     res.set_cookie(
@@ -913,7 +918,8 @@ def oauth_callback(request):
         httponly=True,
         max_age=3600,
         samesite="Lax",
-        secure=not settings.DEBUG
+        secure=not settings.DEBUG,
+        path="/"
     )
     res.set_cookie(
         key="refresh_token",
@@ -921,7 +927,8 @@ def oauth_callback(request):
         httponly=True,
         max_age=86400,
         samesite="Lax",
-        secure=not settings.DEBUG
+        secure=not settings.DEBUG,
+        path="/"
     )
     return res
 
