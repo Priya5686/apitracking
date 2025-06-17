@@ -189,7 +189,7 @@ OAUTH2_PROVIDER = {
     'SCOPES': {'read': 'Read access', 'write': 'Write access'},
     'PKCE_REQUIRED': True,
     'ALLOW_SCOPES_FOR_PUBLIC_CLIENTS': True,
-
+    'SCOPES_BACKEND_CLASS': 'oauth2_provider.scopes.SettingsScopes',
 }
 
 SOCIAL_AUTH_PIPELINE = (
