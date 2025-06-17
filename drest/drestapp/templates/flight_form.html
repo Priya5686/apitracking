@@ -85,12 +85,26 @@
           resultEl.textContent = 'Error: ' + (data.error || 'Unknown error');
         } else {
           resultEl.textContent = JSON.stringify(data, null, 2);
+          if ("Notification" in window && Notification.permission === 'granted') {
+            new Notification('📡 Webhook Registered!', {
+              body: `Tracking flight ${data.flight_number}`
+            });
+          }
         }
+          
 
       } catch (err) {
         resultEl.textContent = 'Request failed' + err.message;
       }
     };
+     // Ask for push notification permission
+     if ("Notification" in window && Notification.permission !== 'granted') {
+      Notification.requestPermission().then(function(permission) {
+        if (permission === 'granted') {
+          new Notification('🔔 Notifications enabled', { body: 'We will send you flight updates.' });
+        }
+      });
+    }
   </script>
 
 </body>
