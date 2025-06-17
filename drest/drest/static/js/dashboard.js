@@ -145,6 +145,7 @@ async function logout() {
     } catch (err) {
         console.error("❌ Error during logout:", err);
     }
+}
 
 function formatTime(isoString) {
     if (!isoString) return null;
@@ -272,6 +273,5 @@ function displayMessage(message) {
     const container = document.getElementById("flight-data-output");
     container.innerHTML = `<p>${message}</p>`;
 }
-
 
 
