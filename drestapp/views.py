@@ -306,7 +306,7 @@ class CustomAuthorizationView(AuthorizationView):
         return super().dispatch(request, *args, **kwargs)
 
 
-def validate_access_token(access_token):
+"""def validate_access_token(access_token):
     try:
         # Decode JWT token
         decoded_token = jwt_decode(access_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
@@ -337,7 +337,7 @@ def validate_access_token(access_token):
         return {"status": False, "error": f"Invalid token: {str(e)}"}
     except Exception as e:
         logger.error(f"Unexpected error during token validation: {str(e)}")
-        return {"status": False, "error": f"Unexpected error: {str(e)}"}
+        return {"status": False, "error": f"Unexpected error: {str(e)}"}"""
 
 
 
@@ -415,7 +415,7 @@ def token_from_cookie(request):
         return None
 
 
-class DashboardApiView(APIView):
+"""class DashboardApiView(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
 
@@ -430,7 +430,7 @@ class DashboardApiView(APIView):
             "email": user.email,
             "is_staff": user.is_staff,
             #"social_associations": list(social_auths)
-        })
+        })"""
 
 
 def dashboard_view(request):
@@ -582,18 +582,84 @@ def reset_password_view(request, uidb64, token):
         return redirect('forgot-password')
 
 
+def validate_access_token(access_token):
+    data = {
+        "token": access_token,
+        "token_type_hint": "access_token",
+        "client_id": settings.OAUTH_CLIENT_ID,
+        "client_secret": settings.OAUTH_CLIENT_SECRET,
+    }
 
+    try:
+        response = requests.post(
+            f"{settings.SITE_URL}/o/introspect/",
+            data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=5
+        )
 
+        if response.status_code == 200:
+            info = response.json()
+            if info.get("active"):
+                return {
+                    "status": True,
+                    "user_id": info.get("user_id"),
+                    "scope": info.get("scope"),
+                    "username": info.get("username"),
+                    "client_id": info.get("client_id"),
+                }
+            return {"status": False, "error": "Token inactive or expired."}
+
+        return {"status": False, "error": f"Failed introspect: {response.status_code}"}
+
+    except requests.RequestException as e:
+        return {"status": False, "error": f"Token introspection error: {str(e)}"}
 
 
 class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        print("🔍 Session keys:", list(request.session.keys()))
+        print("🔐 Session token:", request.session.get("access_token"))
+        print("🍪 Cookie token:", request.COOKIES.get("access_token"))
+        #access_token = request.COOKIES.get('access_token')
+        access_token = request.session.get('access_token') or request.COOKIES.get('access_token')
+        print("Session token:", request.session.get('access_token'))
+        print("Cookie token:", request.COOKIES.get('access_token'))
+        print("Access token from cookie:", access_token)
+
+        if not access_token:
+            return JsonResponse({"error": "No access token found."}, status=401)
+        
+        try:
+            token = AccessToken.objects.filter(token=access_token).first()
+            print("Token from DB:", token)
+
+            if token is None or token.is_expired():
+                return JsonResponse({"error": "Token expired or invalid."}, status=401)
+
+            return JsonResponse({"access_token": token.token})
+        except Exception as e:
+            logger.error(f"Error retrieving access token: {e}")
+            return JsonResponse({"error": "Internal server error"}, status=500)
+
+
+        #if access_token:
+            #return JsonResponse({"access_token": access_token})
+
+
+
+
+
+"""class GetAccessTokenView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
         access_token = request.COOKIES.get('access_token')
         if access_token:
             return JsonResponse({"access_token": access_token})
-        return JsonResponse({"error": "No access token found."}, status=401)
+        return JsonResponse({"error": "No access token found."}, status=401)"""
 
 
 
@@ -999,7 +1065,30 @@ def fetch_stored_flights(request):
 
     return JsonResponse({"flights": flight_data})
 
+from django.utils.decorators import method_decorator
 
+class DashboardApiView(APIView):
+    permission_classes = [AllowAny]
+
+    @method_decorator(csrf_exempt)
+    def get(self, request, *args, **kwargs):
+        access_token = request.session.get("access_token") or request.COOKIES.get("access_token")
+        print("🎫 Dashboard access token:", access_token)
+
+        if not access_token:
+            return JsonResponse({"error": "No access token provided"}, status=401)
+
+        result = validate_access_token(access_token)
+
+        if not result["status"]:
+            return JsonResponse({"error": result["error"]}, status=401)
+
+        return JsonResponse({
+            "username": result["username"],
+            "client_id": result["client_id"],
+            "user_id": result["user_id"],
+            "scope": result["scope"],
+        })
 
 
 
