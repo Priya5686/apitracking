@@ -106,3 +106,33 @@ def fetch_flight_info(flight_number: str, dep_date: str, airline_name: str) -> d
             }
 
     return {"error": "No matching flight found for that date."}
+
+
+from pywebpush import webpush, WebPushException
+from django.conf import settings
+from .models import PushSubscription  # assuming you save subscriptions
+
+def notify_subscribers(title, body):
+    subscriptions = PushSubscription.objects.all()
+    payload = {
+        "title": title,
+        "body": body
+    }
+
+    for sub in PushSubscription.objects.all():
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub.endpoint,
+                    "keys": {
+                        "p256dh": sub.p256dh,
+                        "auth": sub.auth
+                    }
+                },
+                data=json.dumps(payload),
+                vapid_private_key=settings.VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": "mailto:you@example.com"}
+            )
+        except WebPushException as e:
+            print("❌ Push error:", e)
+

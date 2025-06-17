@@ -74,6 +74,17 @@ import requests
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import PushSubscription  # Create this model
+
+
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .models import PushSubscription  
 
 def flight_form_view(request):
     return render(request, 'flight_status.html', {
@@ -144,8 +155,8 @@ def flight_status(request):
 
             return JsonResponse({"message": "Flight info saved", "flight": flight_info})
 
-            return JsonResponse(flight_info)
-            print("Saving to DB:", flight_info)
+            #return JsonResponse(flight_info)
+            #print("Saving to DB:", flight_info)
 
 
         except requests.HTTPError as http_err:
@@ -172,13 +183,43 @@ def rapidapi_webhook(request):
 
         updated = FlightStatusRecord.objects.filter(flight_number=flight_id).update(**updated_info)
         print("✅ Updated flight records:", updated)
+
+        from .utils import notify_subscribers
+        notify_subscribers(f"Flight {flight_id} updated", "Check your dashboard for changes.")
+
         return JsonResponse({"message": "Flight update processed."})
+
+    except Exception as e:
+        print("❌ Webhook error:", str(e))
+        return JsonResponse({"error": "Invalid webhook data."}, status=400)
 
     except Exception as e:
         print("❌ Webhook processing error:", str(e))
         return JsonResponse({"error": "Invalid webhook data."}, status=400)
     
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_subscription(request):
+    try:
+        subscription = json.loads(request.body)
+
+        endpoint = subscription.get("endpoint")
+        if not endpoint:
+            return JsonResponse({"error": "Missing endpoint in subscription"}, status=400)
+
+        # Save or update the subscription
+        PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={"subscription_info": subscription}
+        )
+
+        return JsonResponse({"message": "✅ Subscription saved."})
+    
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 #return JsonResponse({'error': 'Invalid method'}, status=405)

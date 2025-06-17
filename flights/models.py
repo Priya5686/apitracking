@@ -21,3 +21,9 @@ class FlightStatusRecord(models.Model):
     arrival_time = models.DateTimeField()
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PushSubscription(models.Model):
+    endpoint = models.TextField(unique=True)
+    subscription_info = models.JSONField()
+    created = models.DateTimeField(auto_now_add=True)
