@@ -169,17 +169,22 @@ def flight_status(request):
 @require_http_methods(["POST"])
 def rapidapi_webhook(request):
     try:
+        raw_body = request.body.decode()
+        print("📩 Raw Body Received:", raw_body)
         payload = json.loads(request.body)
         print("📥 Webhook received:", payload)
 
         # Extract relevant fields
         flight_id = payload.get("flight", {}).get("number")
+        if not flight_id:
+            raise ValueError("Missing flight number")
         updated_info = {
             # Map fields as needed
             "departure_gate": payload.get("departure", {}).get("gate"),
             "arrival_gate": payload.get("arrival", {}).get("gate"),
             "arrival_baggage_belt": payload.get("arrival", {}).get("baggage"),
         }
+        print("📦 Updating Flight:", flight_id, "With:", updated_info)
 
         updated = FlightStatusRecord.objects.filter(flight_number=flight_id).update(**updated_info)
         print("✅ Updated flight records:", updated)
