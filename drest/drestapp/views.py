@@ -73,6 +73,11 @@ def profile_view(request):
 def login_page(request):
     return render(request, "login.html")
 
+def dashboard_view(request):
+    return render(request, "dashboard.html")
+
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -282,9 +287,6 @@ def token_from_cookie(request):
         logger.error(f"Unexpected error in token_from_cookie: {str(e)}")
         return None
 
-
-def dashboard_view(request):
-    return render(request, "dashboard.html")
 
 
 class AccountView(APIView):
@@ -968,7 +970,7 @@ def oauth_callback(request):
 
 
 
-class DashboardApiView(APIView):
+"""class DashboardApiView(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
 
@@ -983,7 +985,7 @@ class DashboardApiView(APIView):
             "email": user.email,
             "is_staff": user.is_staff,
             #"social_associations": list(social_auths)
-        })
+        })"""
         
 
 import requests
@@ -1021,3 +1023,30 @@ def validate_access_token(access_token):
 
     except requests.RequestException as e:
         return {"status": False, "error": f"Token introspection error: {str(e)}"}
+
+
+
+from django.utils.decorators import method_decorator
+
+class DashboardApiView(APIView):
+    permission_classes = [AllowAny]
+
+    @method_decorator(csrf_exempt)
+    def get(self, request, *args, **kwargs):
+        access_token = request.session.get("access_token") or request.COOKIES.get("access_token")
+        print("🎫 Dashboard access token:", access_token)
+
+        if not access_token:
+            return JsonResponse({"error": "No access token provided"}, status=401)
+
+        result = validate_access_token(access_token)
+
+        if not result["status"]:
+            return JsonResponse({"error": result["error"]}, status=401)
+
+        return JsonResponse({
+            "username": result["username"],
+            "client_id": result["client_id"],
+            "user_id": result["user_id"],
+            "scope": result["scope"],
+        })
