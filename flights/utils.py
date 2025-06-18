@@ -39,10 +39,7 @@ def get_flight_status_from_aviationstack(flight_number, airline_name, departure_
 
 
 #Aviation Stack
-"""import requests
-from datetime import datetime
-from django.conf import settings
-
+"""nabled
 AIRLINE_MAP = {
     "Emirates": "EK",
     "Qatar Airways": "QR",
