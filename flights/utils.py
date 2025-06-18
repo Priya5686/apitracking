@@ -145,13 +145,13 @@ def fetch_flight_info(iata_number, departure_date):
             "flight_number": flight.get("flightNumber"),
             "airline_name": flight.get("airline", {}).get("name"),
 
-            "departure_airport": flight.get("departure", {}).get("airport", {}).get("name"),
+            "scheduled_departure_airport": flight.get("departure", {}).get("airport", {}).get("name"),
             "departure_iata": flight.get("departure", {}).get("airport", {}).get("iata"),
             "scheduled_departure_time": flight.get("departure", {}).get("scheduledTimeUtc"),
             "actual_departure_time": flight.get("departure", {}).get("actualTimeUtc"),
             "departure_gate": flight.get("departure", {}).get("gate"),
 
-            "arrival_airport": flight.get("arrival", {}).get("airport", {}).get("name"),
+            "scheduled_arrival_airport": flight.get("arrival", {}).get("airport", {}).get("name"),
             "arrival_iata": flight.get("arrival", {}).get("airport", {}).get("iata"),
             "scheduled_arrival_time": flight.get("arrival", {}).get("scheduledTimeUtc"),
             "actual_arrival_time": flight.get("arrival", {}).get("actualTimeUtc"),

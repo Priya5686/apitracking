@@ -169,7 +169,9 @@ def rapidapi_webhook(request):
         print("Webhook received:", payload)
 
         # Extract relevant fields
-        flight_id = payload.get("flight", {}).get("number")
+        flights = payload.get("flight", [])
+        flight = flights[0]  # Get the first flight in the list
+        flight_id = flight.get("number")
         if not flight_id:
             raise ValueError("Missing flight number")
         updated_info = {
@@ -179,6 +181,8 @@ def rapidapi_webhook(request):
             "arrival_baggage_belt": payload.get("arrival", {}).get("baggageBelt") or payload.get("arrival", {}).get("baggage") 
             #print("Updating Flight:", flight_id, "With:", updated_info)
         }
+
+        print("📦 Updating Flight:", flight_id, "With:", updated_info)
 
         updated_info = {k: v for k, v in updated_info.items() if v}
 
