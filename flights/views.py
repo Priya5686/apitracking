@@ -142,8 +142,8 @@ def flight_status(request):
                 arrival_gate=flight_info["arrival_gate"],
                 arrival_baggage_belt=flight_info["arrival_baggage_belt"],
 
-                departure_delay = parse_datetime(flight_info["delay_departure_minutes"]),
-                arrival_delay = parse_datetime(flight_info["delay_arrival_minutes"])
+                departure_delay = flight_info["delay_departure_minutes"],
+                arrival_delay = flight_info["delay_arrival_minutes"]
                
             )
 
