@@ -95,13 +95,13 @@ def flight_status(request):
             else:
                 data = request.POST
 
-            iata_number = data.get('iata_number')  # airline_code + flight_number
-            departure_date = data.get('departure_date')
+            iata_number = data.get('iata_number', '').strip()  # airline_code + flight_number
+            departure_date = data.get('departure_date', '').strip()
             #flight_number = data.get('flight_number')
             #airline_name = data.get('airline_name')
             #departure_date = data.get('departure_date')
 
-            if not all([flight_number, departure_date]):
+            if not all([iata_number, departure_date]):
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
             
             airline_code = ''.join([c for c in iata_number if c.isalpha()])
