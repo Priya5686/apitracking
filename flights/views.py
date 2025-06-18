@@ -112,7 +112,8 @@ def flight_status(request):
             existing = FlightStatusRecord.objects.filter(
             flight_number=flight_number,
             airline_name=airline_code,
-            departure_time__date=dep_date
+            #departure_time__date=dep_date
+            scheduled_departure_time__date=dep_date
             ).first()
             
             if existing:
