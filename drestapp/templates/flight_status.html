@@ -4,12 +4,14 @@
   <meta charset="UTF-8">
   <title>Flight Status Checker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 30px;
       max-width: 500px;
       margin: auto;
+      position: relative;
     }
 
     h1 {
@@ -20,12 +22,13 @@
     form {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      position: relative;
     }
 
     input, button {
-      font-size: 0.9rem;
-      padding: 8px;
+      font-size: 1rem;
+      padding: 10px;
       width: 100%;
       box-sizing: border-box;
     }
@@ -40,11 +43,34 @@
 
     pre {
       background-color: #f7f7f7;
-      padding: 10px;
+      padding: 12px;
       margin-top: 20px;
       border-radius: 4px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       overflow-x: auto;
+    }
+
+    .suggestions {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      border: 1px solid #ccc;
+      max-height: 150px;
+      overflow-y: auto;
+      background: white;
+      position: absolute;
+      top: 100%;
+      width: 100%;
+      z-index: 1000;
+    }
+
+    .suggestions li {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .suggestions li:hover {
+      background-color: #eee;
     }
   </style>
 </head>
@@ -52,19 +78,71 @@
 
   <h1>Flight Status</h1>
 
-  <form id="flightForm" action="/api/flightstatus/" method="post">
-    <input type="text" id="flight_number" placeholder="Flight Number" required>
-    <input type="text" id="airline_name" placeholder="Airline Name" required>
+  <form id="flightForm">
+    <label for="airline_input">Airline</label>
+    <input type="text" id="airline_input" placeholder="Type airline..." autocomplete="off" required>
+    <input type="hidden" id="airline_code">
+    <ul id="airline_suggestions" class="suggestions"></ul>
+
+    <label for="flight_number">Flight Number</label>
+    <input type="text" id="flight_number" placeholder="e.g. 101" required>
+
+    <label for="departure_date">Departure Date</label>
     <input type="date" id="departure_date" required>
+
     <button type="submit">Check Status</button>
   </form>
 
   <pre id="result">Loading Flight Details...</pre>
 
   <script>
-    const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}"; 
-    document.getElementById('flightForm').onsubmit = async function(e) {
+    const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+
+    const airlines = [
+      { name: "Air India", code: "AI" },
+      { name: "Emirates", code: "EK" },
+      { name: "Qatar Airways", code: "QR" },
+      { name: "British Airways", code: "BA" },
+      { name: "Lufthansa", code: "LH" }
+      { name: "Air India", code: "AI" }
+    ];
+
+    const input = document.getElementById('airline_input');
+    const codeInput = document.getElementById('airline_code');
+    const suggestionBox = document.getElementById('airline_suggestions');
+
+    input.addEventListener('input', function () {
+      const query = this.value.toLowerCase().trim();
+      suggestionBox.innerHTML = '';
+
+      if (!query) return;
+
+      const results = airlines.filter(a => a.name.toLowerCase().startsWith(query));
+      results.forEach(airline => {
+        const li = document.createElement('li');
+        li.textContent = `(${airline.code}) ${airline.name}`;
+        li.onclick = () => {
+          input.value = airline.name;
+          codeInput.value = airline.code;
+          suggestionBox.innerHTML = '';
+        };
+        suggestionBox.appendChild(li);
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (e.target !== input) {
+        suggestionBox.innerHTML = '';
+      }
+    });
+
+    document.getElementById('flightForm').onsubmit = async function (e) {
       e.preventDefault();
+
+      const airlineCode = codeInput.value.toUpperCase().trim();
+      const flightNumber = document.getElementById('flight_number').value.trim();
+      const departureDate = document.getElementById('departure_date').value.trim();
+      const iata_number = airlineCode + flightNumber;
 
       const resultEl = document.getElementById('result');
       resultEl.textContent = 'Fetching flight status...';
@@ -73,32 +151,27 @@
         const response = await fetch('/api/flightstatus/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            flight_number: document.getElementById('flight_number').value,
-            airline_name: document.getElementById('airline_name').value,
-            departure_date: document.getElementById('departure_date').value,
-          }),
+          body: JSON.stringify({ iata_number, departure_date: departureDate })
         });
 
         const data = await response.json();
-
         if (!response.ok) {
           resultEl.textContent = 'Error: ' + (data.error || 'Unknown error');
         } else {
           resultEl.textContent = JSON.stringify(data, null, 2);
         }
-
       } catch (err) {
-        resultEl.textContent = 'Request failed' + err.message;
+        resultEl.textContent = 'Request failed: ' + err.message;
       }
     };
+
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.register('/static/js/sw.js')
         .then(swReg => {
           console.log('✅ Service Worker registered', swReg);
           askPermissionAndSubscribe(swReg);
         })
-        .catch(err => console.error('❌ SW registration failed:', err));
+        .catch(err => console.error('❌ Service Worker failed:', err));
 
       function askPermissionAndSubscribe(swReg) {
         Notification.requestPermission().then(permission => {
@@ -110,7 +183,7 @@
               return fetch('/api/save-subscription/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subscription),
+                body: JSON.stringify(subscription)
               });
             }).then(res => res.json())
               .then(data => console.log('✅ Subscription saved:', data))
@@ -121,20 +194,11 @@
 
       function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-          .replace(/-/g, '+')
-          .replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
       }
-    } else {
-      console.warn('❌ Push messaging not supported.');
     }
   </script>
-
 </body>
 </html>

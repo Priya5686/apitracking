@@ -1,3 +1,4 @@
+#Aviation Stack
 """import requests
 from django.conf import settings
 
@@ -37,8 +38,8 @@ def get_flight_status_from_aviationstack(flight_number, airline_name, departure_
     return data"""
 
 
-
-import requests
+#Aviation Stack
+"""import requests
 from datetime import datetime
 from django.conf import settings
 
@@ -105,34 +106,88 @@ def fetch_flight_info(flight_number: str, dep_date: str, airline_name: str) -> d
                 "arrival_belt_number": flight["arrival"].get("baggage"),
             }
 
-    return {"error": "No matching flight found for that date."}
+    return {"error": "No matching flight found for that date."}"""
 
 
+import requests
+from django.conf import settings
+
+def fetch_flight_info(flight_number, departure_date, airline_name):
+    try:
+        url = "https://aerodatabox.p.rapidapi.com/flights/number/{}/{}".format(
+            airline_name + flight_number,
+            departure_date
+        )
+        headers = {
+            "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+        # Use first flight in result
+        flight = data.get("departures", [{}])[0]
+
+        return {
+            "flight_number": flight.get("flightNumber"),
+            "airline_name": flight.get("airline", {}).get("name"),
+
+            "departure_airport": flight.get("departure", {}).get("airport", {}).get("name"),
+            "departure_iata": flight.get("departure", {}).get("airport", {}).get("iata"),
+            "scheduled_departure_time": flight.get("departure", {}).get("scheduledTimeUtc"),
+            "actual_departure_time": flight.get("departure", {}).get("actualTimeUtc"),
+            "departure_gate": flight.get("departure", {}).get("gate"),
+
+            "arrival_airport": flight.get("arrival", {}).get("airport", {}).get("name"),
+            "arrival_iata": flight.get("arrival", {}).get("airport", {}).get("iata"),
+            "scheduled_arrival_time": flight.get("arrival", {}).get("scheduledTimeUtc"),
+            "actual_arrival_time": flight.get("arrival", {}).get("actualTimeUtc"),
+            "arrival_gate": flight.get("arrival", {}).get("gate"),
+            "arrival_baggage_belt": flight.get("arrival", {}).get("baggage"),
+
+            "delay_departure_minutes": flight.get("departure", {}).get("delay"),
+            "delay_arrival_minutes": flight.get("arrival", {}).get("delay"),
+        }
+
+    except requests.RequestException as e:
+        return {"error": str(e)}
+
+
+import json
 from pywebpush import webpush, WebPushException
 from django.conf import settings
-from .models import PushSubscription  # assuming you save subscriptions
+from .models import PushSubscription
 
 def notify_subscribers(title, body):
-    subscriptions = PushSubscription.objects.all()
     payload = {
         "title": title,
         "body": body
     }
 
     for sub in PushSubscription.objects.all():
+        sub_info = sub.subscription_info or {}
+        keys = sub_info.get("keys", {})
+
         try:
             webpush(
                 subscription_info={
                     "endpoint": sub.endpoint,
                     "keys": {
-                        "p256dh": sub.p256dh,
-                        "auth": sub.auth
+                        "p256dh": keys.get("p256dh"),
+                        "auth": keys.get("auth")
                     }
                 },
                 data=json.dumps(payload),
                 vapid_private_key=settings.VAPID_PRIVATE_KEY,
                 vapid_claims={"sub": "mailto:you@example.com"}
             )
+            print(f"✅ Notification sent to {sub.endpoint[:50]}...")
         except WebPushException as e:
             print("❌ Push error:", e)
+
+                
+               
+
+
 
