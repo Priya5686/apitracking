@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Flight Status Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,7 +22,6 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      position: relative;
     }
 
     input, button {
@@ -72,6 +70,10 @@
     .suggestions li:hover {
       background-color: #eee;
     }
+
+    .input-wrapper {
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -80,15 +82,17 @@
 
   <form id="flightForm">
     <label for="airline_input">Airline</label>
-    <input type="text" id="airline_input" placeholder="Type airline..." autocomplete="off" required>
-    <input type="hidden" id="airline_code">
-    <ul id="airline_suggestions" class="suggestions"></ul>
+    <div class="input-wrapper">
+      <input type="text" id="airline_input" placeholder="Type airline..." autocomplete="off" required />
+      <ul id="airline_suggestions" class="suggestions"></ul>
+    </div>
+    <input type="hidden" id="airline_code" />
 
     <label for="flight_number">Flight Number</label>
-    <input type="text" id="flight_number" placeholder="e.g. 101" required>
+    <input type="text" id="flight_number" placeholder="e.g. 101" required />
 
     <label for="departure_date">Departure Date</label>
-    <input type="date" id="departure_date" required>
+    <input type="date" id="departure_date" required />
 
     <button type="submit">Check Status</button>
   </form>
@@ -103,8 +107,9 @@
       { name: "Emirates", code: "EK" },
       { name: "Qatar Airways", code: "QR" },
       { name: "British Airways", code: "BA" },
-      { name: "Lufthansa", code: "LH" }
-      { name: "Air India", code: "AI" }
+      { name: "Lufthansa", code: "LH" },
+      { name: "Singapore Airlines", code: "SQ" },
+      { name: "Etihad Airways", code: "EY" }
     ];
 
     const input = document.getElementById('airline_input');
@@ -117,7 +122,7 @@
 
       if (!query) return;
 
-      const results = airlines.filter(a => a.name.toLowerCase().startsWith(query));
+      const results = airlines.filter(a => a.name.toLowerCase().includes(query));
       results.forEach(airline => {
         const li = document.createElement('li');
         li.textContent = `(${airline.code}) ${airline.name}`;
@@ -131,9 +136,7 @@
     });
 
     document.addEventListener('click', e => {
-      if (e.target !== input) {
-        suggestionBox.innerHTML = '';
-      }
+      if (e.target !== input) suggestionBox.innerHTML = '';
     });
 
     document.getElementById('flightForm').onsubmit = async function (e) {
@@ -171,7 +174,7 @@
           console.log('✅ Service Worker registered', swReg);
           askPermissionAndSubscribe(swReg);
         })
-        .catch(err => console.error('❌ Service Worker failed:', err));
+        .catch(err => console.error('❌ SW registration failed:', err));
 
       function askPermissionAndSubscribe(swReg) {
         Notification.requestPermission().then(permission => {
@@ -200,5 +203,6 @@
       }
     }
   </script>
+
 </body>
 </html>
