@@ -131,8 +131,15 @@ def fetch_flight_info(iata_number, departure_date):
         response.raise_for_status()
         data = response.json()
 
-        # Use first flight in result
-        flight = data.get("departures", [{}])[0]
+        if isinstance(data, list) and data:
+            flight = data[0]
+        elif isinstance(data, dict) and "flights" in data and isinstance(data["flights"], list) and data["flights"]:
+            flight = data["flights"][0]
+        else:
+            return {"error": "Flight not found or response format unexpected"}
+
+        #Use first flight in result
+        #flight = data.get("departures", [{}])[0]
 
         return {
             "flight_number": flight.get("flightNumber"),
