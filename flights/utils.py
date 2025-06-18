@@ -120,9 +120,9 @@ def normalize_date(date_input: str) -> str:
             continue
     raise ValueError("Invalid date format. Use YYYY-MM-DD or DD/MM/YYYY.")
 
-def fetch_flight_info(flight_number, departure_date):
+def fetch_flight_info(iata_number, departure_date):
     try:
-        url = "https://aerodatabox.p.rapidapi.com/flights/number/{iata_number}/{departure_date}"
+        url = f"https://aerodatabox.p.rapidapi.com/flights/number/{iata_number}/{departure_date}"
         headers = {
             "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
