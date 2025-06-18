@@ -129,14 +129,22 @@ def flight_status(request):
                 flight_number=flight_info["flight_number"],
                 airline_name=flight_info["airline_name"],
                 departure_airport=flight_info["scheduled_departure_airport"],
-                departure_iata=flight_info["scheduled_departure_code"],
+                #departure_iata=flight_info["scheduled_departure_code"],
+                departure_iata=flight_info["departure_iata"],
                 departure_time=parse_datetime(flight_info["scheduled_departure_time"]),
-                departure_gate=flight_info["gate_number_departure"],
+                actual_departure_time=parse_datetime(flight_info["actual_departure_time"]),
+                departure_gate=flight_info["departure_gate"],
+                #departure_gate=flight_info["gate_number_departure"],
                 arrival_airport=flight_info["scheduled_arrival_airport"],
-                arrival_iata=flight_info["scheduled_arrival_code"],
+                arrival_iata=flight_info["arrival_iata"],
+                arrival_time=parse_datetime(flight_info["scheduled_arrival_time"]),
+                actual_arrival_time=parse_datetime(flight_info["actual_arrival_time"]),
                 arrival_gate=flight_info["arrival_gate"],
-                arrival_baggage_belt=flight_info["arrival_belt_number"],
-                arrival_time=parse_datetime(flight_info["scheduled_arrival_time"])
+                arrival_baggage_belt=flight_info["arrival_baggage_belt"],
+
+                departure_delay = parse_datetime(flight_info["delay_departure_minutes"]),
+                arrival_delay = parse_datetime(flight_info["delay_arrival_minutes"])
+               
             )
 
               # Register webhook to RapidAPI
