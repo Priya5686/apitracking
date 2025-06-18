@@ -111,6 +111,17 @@ def fetch_flight_info(flight_number: str, dep_date: str, airline_name: str) -> d
 
 import requests
 from django.conf import settings
+from datetime import datetime
+
+
+
+def normalize_date(date_input: str) -> str:
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(date_input, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    raise ValueError("Invalid date format. Use YYYY-MM-DD or DD/MM/YYYY.")
 
 def fetch_flight_info(flight_number, departure_date, airline_name):
     try:
