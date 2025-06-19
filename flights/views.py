@@ -117,27 +117,27 @@ def flight_status(request):
                   return JsonResponse({"message": "Flight already exists", "id": existing.id})
             
             flight_info = fetch_flight_info(iata_number, dep_date)
+            print("🔍 Flight info received:", flight_info)
+
             
             if "error" in flight_info:
                 return JsonResponse({'error': flight_info["error"]}, status=404)
             
-            print("🔍 Flight info received:", flight_info)
+         
             scheduled_departure_time_raw = flight_info.get("scheduled_departure_time")
-            if not scheduled_departure_time_raw:
+            scheduled_arrival_time_raw = flight_info.get("scheduled_arrival_time")
+
+            if not scheduled_departure_time_raw or not scheduled_arrival_time_raw:
                 return JsonResponse({'error': 'Missing scheduled departure time from API'}, status=400)
             
-            scheduled_arrival_time_raw = flight_info.get("scheduled_arrival_time")
-            if not scheduled_arrival_time_raw:
-                return JsonResponse({'error': 'Missing scheduled arrival time from API'}, status=400)
-            
             try:
-                parsed_scheduled_departure = parse_datetime(scheduled_departure_time_raw)
-                parsed_scheduled_arrival = parse_datetime(scheduled_arrival_time_raw)
-                parsed_actual_departure = parse_datetime(flight_info.get("actual_departure_time")) if flight_info.get("actual_departure_time") else None
-                parsed_actual_arrival = parse_datetime(flight_info.get("actual_arrival_time")) if flight_info.get("actual_arrival_time") else None
+                scheduled_departure = parse_datetime(scheduled_departure_time_raw)
+                scheduled_arrival = parse_datetime(scheduled_arrival_time_raw)
+                actual_departure = parse_datetime(flight_info.get("actual_departure_time")) if flight_info.get("actual_departure_time") else None
+                actual_arrival = parse_datetime(flight_info.get("actual_arrival_time")) if flight_info.get("actual_arrival_time") else None
             except Exception as dt_err:
                 return JsonResponse({'error': f'Error parsing datetime: {dt_err}'}, status=400)
-
+                    
 
             # Save to DB
             record = FlightStatusRecord.objects.create(
@@ -145,13 +145,13 @@ def flight_status(request):
                 airline_name=flight_info["airline_name"],
                 departure_airport=flight_info["scheduled_departure_airport"],
                 departure_iata=flight_info["departure_iata"],
-                scheduled_departure_time=parsed_scheduled_departure,
-                actual_departure_time= parsed_actual_departure,
+                scheduled_departure_time=scheduled_departure,
+                actual_departure_time=actual_departure,
                 departure_gate=flight_info["departure_gate"],
                 arrival_airport=flight_info["scheduled_arrival_airport"],
                 arrival_iata=flight_info["arrival_iata"],
-                scheduled_arrival_time=parsed_scheduled_arrival,
-                actual_arrival_time=parsed_actual_arrival,
+                scheduled_arrival_time=scheduled_arrival,
+                actual_arrival_time=actual_arrival,
                 arrival_gate=flight_info["arrival_gate"],
                 arrival_baggage_belt=flight_info["arrival_baggage_belt"],
 
