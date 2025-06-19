@@ -85,94 +85,89 @@ def flight_form_view(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def flight_status(request):
-    if request.method == 'POST':
-        try:
-            if request.content_type == 'application/json':
-                data = json.loads(request.body)
-            else:
-                data = request.POST
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            data = request.POST
 
-            iata_number = data.get('iata_number', '').strip()  # airline_code + flight_number
-            departure_date = data.get('departure_date', '').strip()
+        iata_number = data.get('iata_number', '').strip()
+        departure_date = data.get('departure_date', '').strip()
 
-            if not all([iata_number, departure_date]):
-                return JsonResponse({'error': 'Missing required fields'}, status=400)
-            
-            airline_code = ''.join([c for c in iata_number if c.isalpha()])
-            flight_number = ''.join([c for c in iata_number if c.isdigit()])
-            dep_date = normalize_date(departure_date)
+        if not all([iata_number, departure_date]):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
 
-           
-            existing = FlightStatusRecord.objects.filter(
+        airline_code = ''.join([c for c in iata_number if c.isalpha()])
+        flight_number = ''.join([c for c in iata_number if c.isdigit()])
+        dep_date = normalize_date(departure_date)
+
+        existing = FlightStatusRecord.objects.filter(
             flight_number=flight_number,
             airline_name=airline_code,
-            #departure_time__date=dep_date
             scheduled_departure_time__date=dep_date
-            ).first()
-            
-            if existing:
-                  return JsonResponse({"message": "Flight already exists", "id": existing.id})
-            
-            flight_info = fetch_flight_info(iata_number, dep_date)
-            print("🔍 Flight info received:", flight_info)
+        ).first()
 
-            
-            if "error" in flight_info:
-                return JsonResponse({'error': flight_info["error"]}, status=404)
+        if existing:
+            return JsonResponse({"message": "Flight already exists", "id": existing.id})
 
-            # Save to DB
-            record = FlightStatusRecord.objects.create(
-                flight_number=flight_info["flight_number"],
-                airline_name=flight_info["airline_name"],
-                departure_airport=flight_info["scheduled_departure_airport"],
-                departure_iata=flight_info["departure_iata"],
-                scheduled_departure_time=parse_datetime(flight_info["scheduled_departure_time"]),
-                actual_departure_time=parse_datetime(flight_info["actual_departure_time"]) if flight_info["actual_departure_time"] else None,
-                departure_gate=flight_info["departure_gate"],
-                arrival_airport=flight_info["scheduled_arrival_airport"],
-                arrival_iata=flight_info["arrival_iata"],
-                scheduled_arrival_time=parse_datetime(flight_info["scheduled_arrival_time"]),
-                actual_arrival_time=parse_datetime(flight_info["actual_arrival_time"]) if flight_info["actual_arrival_time"] else None,
-                arrival_gate=flight_info["arrival_gate"],
-                arrival_baggage_belt=flight_info["arrival_baggage_belt"],
+        flight_info = fetch_flight_info(iata_number, dep_date)
+        print("🔍 Flight info received:", flight_info)
 
-                #departure_delay = flight_info["delay_departure_minutes"],
-                #arrival_delay = flight_info["delay_arrival_minutes"],
-               
-            )
+        if "error" in flight_info:
+            return JsonResponse({'error': flight_info["error"]}, status=404)
 
-              # Register webhook to RapidAPI
-            subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{iata_number}"
-            payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
-            headers = {
-                "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
-                "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com",
-                "Content-Type": "application/json"
+        # Save flight record
+        record = FlightStatusRecord.objects.create(
+            flight_number=flight_info["flight_number"],
+            airline_name=flight_info["airline_name"],
+            departure_airport=flight_info["scheduled_departure_airport"],
+            departure_iata=flight_info["departure_iata"],
+            scheduled_departure_time=parse_datetime(flight_info["scheduled_departure_time"]),
+            actual_departure_time=parse_datetime(flight_info["actual_departure_time"]) if flight_info["actual_departure_time"] else None,
+            departure_gate=flight_info["departure_gate"],
+            arrival_airport=flight_info["scheduled_arrival_airport"],
+            arrival_iata=flight_info["arrival_iata"],
+            scheduled_arrival_time=parse_datetime(flight_info["scheduled_arrival_time"]),
+            actual_arrival_time=parse_datetime(flight_info["actual_arrival_time"]) if flight_info["actual_arrival_time"] else None,
+            arrival_gate=flight_info["arrival_gate"],
+            arrival_baggage_belt=flight_info["arrival_baggage_belt"],
+        )
+
+        # Subscribe to webhook
+        subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{iata_number}"
+        payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
+        headers = {
+            "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com",
+            "Content-Type": "application/json"
+        }
+
+        sub_response = requests.post(subscribe_url, json=payload, headers=headers)
+        print("Webhook subscription response:", sub_response.text)
+
+        if sub_response.status_code != 200:
+            return JsonResponse({'error': 'Failed to subscribe to webhook'}, status=500)
+
+        sub_data = sub_response.json()
+        import uuid
+        from .models import RapidAPISubscription
+
+        # Save subscription record
+        RapidAPISubscription.objects.update_or_create(
+            id=uuid.UUID(sub_data["id"]),
+            defaults={
+                "flight": record,
+                "is_active": sub_data.get("isActive", True),
+                "expires_on": parse_datetime(sub_data["expiresOnUtc"]),
             }
+        )
 
-            sub_response = requests.post(subscribe_url, json=payload, headers=headers)
-            print("Webhook subscription response:", sub_response.text)
+        return JsonResponse({"message": "Flight info saved", "flight": flight_info})
 
-            if sub_response.status_code != 200:
-                 return JsonResponse({'error': 'Failed to subscribe to webhook'}, status=500)
-
-            sub_data = sub_response.json()
-
-        # Save RapidAPISubscription to DB
-            RapidAPISubscription.objects.create(
-                id=sub_data["id"],
-                flight=record,
-                is_active=sub_data.get("isActive", True),
-                expires_on=parse_datetime(sub_data["expiresOnUtc"])
-            )
-
-            return JsonResponse({"message": "Flight info saved", "flight": flight_info})
-
-        except requests.HTTPError as http_err:
-            return JsonResponse({'error': f'API error: {http_err}'}, status=500)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-        
+    except requests.HTTPError as http_err:
+        return JsonResponse({'error': f'API error: {http_err}'}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
