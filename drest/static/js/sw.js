@@ -1,5 +1,3 @@
-// sw.js
-
 self.addEventListener("push", function(event) {
     let data = {};
     
