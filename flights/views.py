@@ -148,8 +148,8 @@ def flight_status(request):
             subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{iata_number}"
             payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
             headers = {
-                "x-rapidapi-key": settings.RAPIDAPI_KEY,
-                "x-rapidapi-host": "aerodatabox.p.rapidapi.com",
+                "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
+                "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com",
                 "Content-Type": "application/json"
             }
 
