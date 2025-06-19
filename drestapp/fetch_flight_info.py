@@ -145,4 +145,28 @@ print(response.json())"""
 
 
 
-https://aerodatabox.p.rapidapi.com/flights/number
+#https://aerodatabox.p.rapidapi.com/flights/number
+
+import requests
+
+url = "https://aerodatabox.p.rapidapi.com/flights/number/EK412/2025-06-19"
+headers = {
+    "X-RapidAPI-Key": "859ac81a31msh9d619d7e5aa1605p1c8f47jsn4d3c1474d6b6",
+    "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
+}
+
+response = requests.get(url, headers=headers)
+data = response.json()
+
+# Ensure the response is a list
+if isinstance(data, list):
+    for flight in data:
+        airline = flight.get("airline", {}).get("name", "Unknown Airline")
+        flight_num = flight.get("number", "Unknown Number")
+        scheduled_time = flight.get("departure", {}).get("scheduledTime", {}).get("utc")
+        if scheduled_time:
+            print(f"{airline} flight {flight_num} is scheduled to depart at {scheduled_time}")
+        else:
+            print(f"{airline} flight {flight_num} has no scheduled departure time available.")
+else:
+    print("Unexpected data format:", type(data))
