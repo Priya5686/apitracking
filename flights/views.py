@@ -62,14 +62,11 @@ def flight_status(request):
 
 
 
-
-
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from .utils import fetch_flight_info, normalize_date
-from .models import FlightStatusRecord
 import requests
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_http_methods
@@ -77,7 +74,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
-from .models import PushSubscription  # Create this model
+from .models import PushSubscription, FlightStatusRecord, RapidAPISubscription   # Create this model
 
 
 def flight_form_view(request):
@@ -156,6 +153,19 @@ def flight_status(request):
             sub_response = requests.post(subscribe_url, json=payload, headers=headers)
             print("Webhook subscription response:", sub_response.text)
 
+            if sub_response.status_code != 200:
+                 return JsonResponse({'error': 'Failed to subscribe to webhook'}, status=500)
+
+            sub_data = sub_response.json()
+
+        # Save RapidAPISubscription to DB
+            RapidAPISubscription.objects.create(
+                id=sub_data["id"],
+                flight=record,
+                is_active=sub_data.get("isActive", True),
+                expires_on=parse_datetime(sub_data["expiresOnUtc"])
+            )
+
             return JsonResponse({"message": "Flight info saved", "flight": flight_info})
 
         except requests.HTTPError as http_err:
@@ -173,29 +183,40 @@ def rapidapi_webhook(request):
         payload = json.loads(request.body)
         print("Webhook received:", payload)
 
-        # Extract relevant fields
-        flights = payload.get("flight", [])
-        if not flights:
-            raise ValueError("Missing flight data")
-        flight = flights[0]  # Get the first flight in the list
-        flight_id = flight.get("number")
-        if not flight_id:
-            raise ValueError("Missing flight number")
-        updated_info = {
-            "departure_gate": payload.get("departure", {}).get("gate"),
-            "arrival_gate": payload.get("arrival", {}).get("gate"),
-            "arrival_baggage_belt": payload.get("arrival", {}).get("baggageBelt") or payload.get("arrival", {}).get("baggage") 
+        subject = payload.get("subject", {})
+        flight_number = subject.get("id")  # e.g., "EK 809"
+        if not flight_number:
+            return JsonResponse({"error": "Missing flight number"}, status=400)
+        
+        record = FlightStatusRecord.objects.filter(flight_number=flight_number).first()
+        if not record:
+            return JsonResponse({"error": "Flight not found"}, status=404)
+        
+
+        url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight_number}/{record.scheduled_departure_time.date()}"
+        headers = {
+            "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
+        }
+        response = requests.get(url, headers=headers)
+        data = response.json()
+
+        # Safely extract and update gate and baggage info
+        updates = {
+            "departure_gate": data.get("departure", {}).get("gate"),
+            "arrival_gate": data.get("arrival", {}).get("gate"),
+            "arrival_baggage_belt": data.get("arrival", {}).get("baggageBelt") or data.get("arrival", {}).get("baggage")
         }
 
-        updated_info = {k: v for k, v in updated_info.items() if v}
+        cleaned = {k: v for k, v in updates.items() if v}
+        print("🔄 Updating:", cleaned)
 
-        print("Updating Flight:", flight_id, "With:", updated_info)
-
-        updated = FlightStatusRecord.objects.filter(flight_number=flight_id).update(**updated_info)
-        print("Updated flight records:", updated)
+        for key, value in cleaned.items():
+            setattr(record, key, value)
+        record.save()
 
         from .utils import notify_subscribers
-        notify_subscribers(f"Flight {flight_id} updated", "Check your dashboard for changes.")
+        notify_subscribers(f"Flight {flight_number} updated", "Check your dashboard for changes.")
 
         return JsonResponse({"message": "Flight update processed."})
 
@@ -203,11 +224,7 @@ def rapidapi_webhook(request):
         print("Webhook error:", str(e))
         return JsonResponse({"error": "Invalid webhook data."}, status=400)
 
-    except Exception as e:
-        print("Webhook processing error:", str(e))
-        return JsonResponse({"error": "Invalid webhook data."}, status=400)
     
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def save_subscription(request):

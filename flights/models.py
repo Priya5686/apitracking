@@ -34,3 +34,21 @@ class PushSubscription(models.Model):
 
     def __str__(self):
         return f"Subscription to {self.endpoint[:30]}..."
+    
+
+import uuid
+from django.db import models
+
+class RapidAPISubscription(models.Model):
+    id = models.UUIDField(primary_key=True)  # This matches the Aerodatabox "subscriptionId"
+    flight = models.OneToOneField(
+        'FlightStatusRecord',
+        on_delete=models.CASCADE,
+        related_name='rapidapi_subscription'
+    )
+    is_active = models.BooleanField(default=True)
+    expires_on = models.DateTimeField()
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Subscription for {self.flight.flight_number} (Active: {self.is_active})"
