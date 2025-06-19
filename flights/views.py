@@ -183,7 +183,7 @@ def rapidapi_webhook(request):
         if not flight_number:
             return JsonResponse({"error": "Missing flight number"}, status=400)
         
-        record = FlightStatusRecord.objects.filter(flight_number=flight_number).first()
+        record = FlightStatusRecord.objects.filter(flight_number=flight_number).replace(" ", "").first()
         if not record:
             return JsonResponse({"error": "Flight not found"}, status=404)
         
