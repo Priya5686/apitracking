@@ -97,9 +97,6 @@ def flight_status(request):
 
             iata_number = data.get('iata_number', '').strip()  # airline_code + flight_number
             departure_date = data.get('departure_date', '').strip()
-            #flight_number = data.get('flight_number')
-            #airline_name = data.get('airline_name')
-            #departure_date = data.get('departure_date')
 
             if not all([iata_number, departure_date]):
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
@@ -129,7 +126,6 @@ def flight_status(request):
                 flight_number=flight_info["flight_number"],
                 airline_name=flight_info["airline_name"],
                 departure_airport=flight_info["scheduled_departure_airport"],
-                #departure_iata=flight_info["scheduled_departure_code"],
                 departure_iata=flight_info["departure_iata"],
                 scheduled_departure_time=parse_datetime(flight_info["scheduled_departure_time"])if flight_info["scheduled_departure_time"] else None,
                 actual_departure_time=parse_datetime(flight_info["actual_departure_time"])if flight_info["actual_departure_time"] else None,
@@ -177,21 +173,21 @@ def rapidapi_webhook(request):
 
         # Extract relevant fields
         flights = payload.get("flight", [])
+        if not flights:
+            raise ValueError("Missing flight data")
         flight = flights[0]  # Get the first flight in the list
         flight_id = flight.get("number")
         if not flight_id:
             raise ValueError("Missing flight number")
         updated_info = {
-            # Map fields as needed
             "departure_gate": payload.get("departure", {}).get("gate"),
             "arrival_gate": payload.get("arrival", {}).get("gate"),
             "arrival_baggage_belt": payload.get("arrival", {}).get("baggageBelt") or payload.get("arrival", {}).get("baggage") 
-            #print("Updating Flight:", flight_id, "With:", updated_info)
         }
 
-        print("📦 Updating Flight:", flight_id, "With:", updated_info)
-
         updated_info = {k: v for k, v in updated_info.items() if v}
+
+        print("Updating Flight:", flight_id, "With:", updated_info)
 
         updated = FlightStatusRecord.objects.filter(flight_number=flight_id).update(**updated_info)
         print("Updated flight records:", updated)

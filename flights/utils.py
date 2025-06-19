@@ -138,11 +138,9 @@ def fetch_flight_info(iata_number, departure_date):
         else:
             return {"error": "Flight not found or response format unexpected"}
 
-        #Use first flight in result
-        #flight = data.get("departures", [{}])[0]
 
         return {
-            "flight_number": flight.get("flightNumber"),
+            "flight_number": flight.get("number") or flight.get("flightNumber"),
             "airline_name": flight.get("airline", {}).get("name"),
 
             "scheduled_departure_airport": flight.get("departure", {}).get("airport", {}).get("name"),
