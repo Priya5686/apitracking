@@ -8,9 +8,8 @@
     body {
       font-family: Arial, sans-serif;
       padding: 30px;
-      max-width: 500px;
+      max-width: 600px;
       margin: auto;
-      position: relative;
     }
 
     h1 {
@@ -39,19 +38,14 @@
       border-radius: 4px;
     }
 
-    pre {
-      background-color: #f7f7f7;
-      padding: 12px;
-      margin-top: 20px;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      overflow-x: auto;
+    .input-wrapper {
+      position: relative;
     }
 
     .suggestions {
       list-style: none;
-      margin: 0;
       padding: 0;
+      margin: 0;
       border: 1px solid #ccc;
       max-height: 150px;
       overflow-y: auto;
@@ -71,8 +65,25 @@
       background-color: #eee;
     }
 
-    .input-wrapper {
-      position: relative;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      display: none;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    pre {
+      margin-top: 15px;
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 0.9rem;
     }
   </style>
 </head>
@@ -97,10 +108,27 @@
     <button type="submit">Check Status</button>
   </form>
 
-  <pre id="result">Loading Flight Details...</pre>
+  <pre id="result"></pre>
+
+  <table id="flightTable">
+    <thead>
+      <tr>
+        <th>Flight No</th>
+        <th>Airline</th>
+        <th>Dep. Airport</th>
+        <th>Dep. Time</th>
+        <th>Gate</th>
+        <th>Arr. Airport</th>
+        <th>Arr. Time</th>
+        <th>Gate</th>
+        <th>Baggage</th>
+      </tr>
+    </thead>
+    <tbody id="flightTableBody"></tbody>
+  </table>
 
   <script>
-    const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+    const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";  // Injected by Django
 
     const airlines = [
       { name: "Air India", code: "AI" },
@@ -119,9 +147,7 @@
     input.addEventListener('input', function () {
       const query = this.value.toLowerCase().trim();
       suggestionBox.innerHTML = '';
-
       if (!query) return;
-
       const results = airlines.filter(a => a.name.toLowerCase().includes(query));
       results.forEach(airline => {
         const li = document.createElement('li');
@@ -148,6 +174,9 @@
       const iata_number = airlineCode + flightNumber;
 
       const resultEl = document.getElementById('result');
+      const table = document.getElementById('flightTable');
+      const tbody = document.getElementById('flightTableBody');
+
       resultEl.textContent = 'Fetching flight status...';
 
       try {
@@ -160,14 +189,34 @@
         const data = await response.json();
         if (!response.ok) {
           resultEl.textContent = 'Error: ' + (data.error || 'Unknown error');
-        } else {
-          resultEl.textContent = JSON.stringify(data, null, 2);
+          table.style.display = 'none';
+          return;
         }
+
+        const flight = data.flight;
+        resultEl.textContent = '';
+        tbody.innerHTML = `
+          <tr>
+            <td>${flight.flight_number}</td>
+            <td>${flight.airline_name}</td>
+            <td>${flight.scheduled_departure_airport} (${flight.departure_iata})</td>
+            <td>${flight.scheduled_departure_time}</td>
+            <td>${flight.departure_gate || '-'}</td>
+            <td>${flight.scheduled_arrival_airport} (${flight.arrival_iata})</td>
+            <td>${flight.scheduled_arrival_time}</td>
+            <td>${flight.arrival_gate || '-'}</td>
+            <td>${flight.arrival_baggage_belt || '-'}</td>
+          </tr>
+        `;
+        table.style.display = 'table';
+
       } catch (err) {
         resultEl.textContent = 'Request failed: ' + err.message;
+        table.style.display = 'none';
       }
     };
 
+    // ✅ Register service worker once, globally
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.register('/static/js/sw.js')
         .then(swReg => {
