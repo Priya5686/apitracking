@@ -132,17 +132,17 @@ def flight_status(request):
                 #departure_iata=flight_info["scheduled_departure_code"],
                 departure_iata=flight_info["departure_iata"],
                 scheduled_departure_time=parse_datetime(flight_info["scheduled_departure_time"])if flight_info["scheduled_departure_time"] else None,
-                actual_departure_time=parse_datetime(flight_info["actual_departure_time"])if flight_info("actual_departure_time") else None,
+                actual_departure_time=parse_datetime(flight_info["actual_departure_time"])if flight_info["actual_departure_time"] else None,
                 departure_gate=flight_info["departure_gate"],
                 arrival_airport=flight_info["scheduled_arrival_airport"],
                 arrival_iata=flight_info["arrival_iata"],
-                scheduled_arrival_time=parse_datetime(flight_info["scheduled_arrival_time"])if flight_info("scheduled_arrival_time") else None,
-                actual_arrival_time=parse_datetime(flight_info["actual_arrival_time"])if flight_info("actual_arrival_time")else None,
+                scheduled_arrival_time=parse_datetime(flight_info["scheduled_arrival_time"])if flight_info["scheduled_arrival_time"] else None,
+                actual_arrival_time=parse_datetime(flight_info["actual_arrival_time"])if flight_info["actual_arrival_time"]else None,
                 arrival_gate=flight_info["arrival_gate"],
                 arrival_baggage_belt=flight_info["arrival_baggage_belt"],
 
-                departure_delay = flight_info("delay_departure_minutes"),
-                arrival_delay = flight_info("delay_arrival_minutes"),
+                departure_delay = flight_info["delay_departure_minutes"],
+                arrival_delay = flight_info["delay_arrival_minutes"],
                
             )
 
