@@ -120,6 +120,14 @@ def flight_status(request):
             
             if "error" in flight_info:
                 return JsonResponse({'error': flight_info["error"]}, status=404)
+            
+            scheduled_departure_time_raw = flight_info.get("scheduled_departure_time")
+            if not scheduled_departure_time_raw:
+                return JsonResponse({'error': 'Missing scheduled departure time from API'}, status=400)
+            
+            scheduled_arrival_time_raw = flight_info.get("scheduled_arrival_time")
+            if not scheduled_arrival_time_raw:
+                return JsonResponse({'error': 'Missing scheduled arrival time from API'}, status=400)
 
             # Save to DB
             record = FlightStatusRecord.objects.create(
@@ -127,12 +135,12 @@ def flight_status(request):
                 airline_name=flight_info["airline_name"],
                 departure_airport=flight_info["scheduled_departure_airport"],
                 departure_iata=flight_info["departure_iata"],
-                scheduled_departure_time=parse_datetime(flight_info["scheduled_departure_time"])if flight_info["scheduled_departure_time"] else None,
+                scheduled_departure_time=parse_datetime(scheduled_departure_time_raw),
                 actual_departure_time=parse_datetime(flight_info["actual_departure_time"])if flight_info["actual_departure_time"] else None,
                 departure_gate=flight_info["departure_gate"],
                 arrival_airport=flight_info["scheduled_arrival_airport"],
                 arrival_iata=flight_info["arrival_iata"],
-                scheduled_arrival_time=parse_datetime(flight_info["scheduled_arrival_time"])if flight_info["scheduled_arrival_time"] else None,
+                scheduled_arrival_time=parse_datetime(scheduled_arrival_time_raw),
                 actual_arrival_time=parse_datetime(flight_info["actual_arrival_time"])if flight_info["actual_arrival_time"]else None,
                 arrival_gate=flight_info["arrival_gate"],
                 arrival_baggage_belt=flight_info["arrival_baggage_belt"],
