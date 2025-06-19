@@ -121,6 +121,7 @@ def flight_status(request):
             if "error" in flight_info:
                 return JsonResponse({'error': flight_info["error"]}, status=404)
             
+            print("🔍 Flight info received:", flight_info)
             scheduled_departure_time_raw = flight_info.get("scheduled_departure_time")
             if not scheduled_departure_time_raw:
                 return JsonResponse({'error': 'Missing scheduled departure time from API'}, status=400)
