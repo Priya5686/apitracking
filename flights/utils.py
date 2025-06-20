@@ -124,7 +124,7 @@ def fetch_flight_info(iata_number, departure_date):
     try:
         url = f"https://aerodatabox.p.rapidapi.com/flights/number/{iata_number}/{departure_date}"
         headers = {
-            "X-RapidAPI-Key": settings.NEWAPI_KEY,
+            "X-RapidAPI-Key":  settings.NEWAPI_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
         }
         response = requests.get(url, headers=headers)
