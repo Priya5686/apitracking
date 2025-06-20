@@ -289,7 +289,7 @@ def refresh_subscription(request, subscription_id):
             return JsonResponse({'error': 'Flight is not within refresh window'}, status=400)
 
         # 🔁 Call RapidAPI refresh endpoint
-        refresh_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/refresh/{subscription_id}"
+        refresh_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/{subscription_id}/refresh"
         headers = {
             "X-RapidAPI-Key": settings.NEWAPI_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
