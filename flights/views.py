@@ -139,7 +139,7 @@ def flight_status(request):
             arrival_gate=flight_info["arrival_gate"],
             arrival_baggage_belt=flight_info["arrival_baggage_belt"],
         )
-
+        """
         # Subscribe to webhook
         subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{iata_number}"
         payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
@@ -336,4 +336,4 @@ def refresh_subscription(request, subscription_id):
     except RapidAPISubscription.DoesNotExist:
         return JsonResponse({'error': 'Subscription not found'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': str(e)}, status=500)"""
