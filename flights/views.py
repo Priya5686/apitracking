@@ -191,7 +191,7 @@ def rapidapi_webhook(request):
             return JsonResponse({"error": "Flight not found"}, status=404)
         
 
-        url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight_number}/{record.scheduled_departure_time_local.date()}"
+        url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight_number}/{record.scheduled_departure_time.date()}"
         headers = {
             "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
@@ -299,7 +299,7 @@ def refresh_subscription(request, subscription_id):
             return JsonResponse({'error': 'Failed to refresh subscription'}, status=500)
 
         # 📥 Now fetch updated flight info
-        flight_info_url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight.flight_number}/{flight.scheduled_departure_time_local.date()}"
+        flight_info_url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight.flight_number}/{flight.scheduled_departure_time.date()}"
         data_response = requests.get(flight_info_url, headers=headers)
         flight_data = data_response.json()
 
