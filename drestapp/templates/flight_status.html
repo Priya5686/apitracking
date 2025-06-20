@@ -186,10 +186,12 @@
             <td>${flight.flight_number}</td>
             <td>${flight.airline_name}</td>
             <td>${flight.scheduled_departure_airport} (${flight.departure_iata})</td>
-            <td>${flight.scheduled_departure_time}</td>
+            <td>${flight.scheduled_departure_time_local}</td>
+            <td>${flight.actual_departure_time_local}</td>
             <td>${flight.departure_gate || '-'}</td>
             <td>${flight.scheduled_arrival_airport} (${flight.arrival_iata})</td>
-            <td>${flight.scheduled_arrival_time}</td>
+            <td>${flight.scheduled_arrival_time_local}</td>
+            <td>${flight.actual_arrival_time_local}</td>
             <td>${flight.arrival_gate || '-'}</td>
             <td>${flight.arrival_baggage_belt || '-'}</td>
           </tr>
