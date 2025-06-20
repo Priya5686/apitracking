@@ -191,7 +191,7 @@ def rapidapi_webhook(request):
             return JsonResponse({"error": "Flight not found"}, status=404)
         
 
-        url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight_number}/{record.scheduled_departure_time.date()}"
+        url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight_number}/{record.scheduled_departure_time_local.date()}"
         headers = {
             "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
