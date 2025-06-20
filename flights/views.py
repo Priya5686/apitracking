@@ -284,7 +284,7 @@ def refresh_subscription(request, subscription_id):
         flight = sub.flight
 
         # ⏱ Check if it's within 1 hour before departure
-        if not (now() <= flight.scheduled_departure_time <= now() + timedelta(hours=1)):
+        if not (now() <= flight.scheduled_departure_time_local <= now() + timedelta(hours=1)):
             return JsonResponse({'error': 'Flight is not within refresh window'}, status=400)
 
         # 🔁 Call RapidAPI refresh endpoint
