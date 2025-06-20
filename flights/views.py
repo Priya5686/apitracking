@@ -202,13 +202,13 @@ def rapidapi_webhook(request):
         # Safely extract and update gate and baggage info
         updates = {
             "departure_gate": data.get("departure", {}).get("gate"),
-            "scheduled_departure_time": data.get("departure", {}).get("scheduledTime"),
-            "actual_departure_time": data.get("departure", {}).get("actualTimeUtc"),
+            "scheduled_departure_time_local": data.get("departure", {}).get("scheduledTimeLocal"),
+            "actual_departure_time_local": data.get("departure", {}).get("actualTimeLocal"),
     
             "arrival_gate": data.get("arrival", {}).get("gate"),
             "arrival_baggage_belt": data.get("arrival", {}).get("baggageBelt") or data.get("arrival", {}).get("baggage"),
-            "scheduled_arrival_time": data.get("arrival", {}).get("scheduledTimeUtc"),
-            "actual_arrival_time": data.get("arrival", {}).get("actualTimeUtc"),
+            "scheduled_arrival_time_local": data.get("arrival", {}).get("scheduledTimeLocal"),
+            "actual_arrival_time_local": data.get("arrival", {}).get("actualTimeLocal"),
         }
 
         cleaned = {k: v for k, v in updates.items() if v}
@@ -299,7 +299,7 @@ def refresh_subscription(request, subscription_id):
             return JsonResponse({'error': 'Failed to refresh subscription'}, status=500)
 
         # 📥 Now fetch updated flight info
-        flight_info_url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight.flight_number}/{flight.scheduled_departure_time.date()}"
+        flight_info_url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight.flight_number}/{flight.scheduled_departure_time_local.date()}"
         data_response = requests.get(flight_info_url, headers=headers)
         flight_data = data_response.json()
 
@@ -307,10 +307,10 @@ def refresh_subscription(request, subscription_id):
             "departure_gate": flight_data.get("departure", {}).get("gate"),
             "arrival_gate": flight_data.get("arrival", {}).get("gate"),
             "arrival_baggage_belt": flight_data.get("arrival", {}).get("baggageBelt") or flight_data.get("arrival", {}).get("baggage"),
-            "scheduled_departure_time": flight_data.get("departure", {}).get("scheduledTimeUtc"),
-            "scheduled_arrival_time": flight_data.get("arrival", {}).get("scheduledTimeUtc"),
-            "actual_departure_time": flight_data.get("departure", {}).get("actualTimeUtc"),
-            "actual_arrival_time": flight_data.get("arrival", {}).get("actualTimeUtc"),
+            "scheduled_departure_time_local": flight_data.get("departure", {}).get("scheduledTimeLocal"),
+            "scheduled_arrival_time_local": flight_data.get("arrival", {}).get("scheduledTimeLocal"),
+            "actual_departure_time_local": flight_data.get("departure", {}).get("actualTimeLocal"),
+            "actual_arrival_time_local": flight_data.get("arrival", {}).get("actualTimeLocal"),
         }
 
         # 🛠 Update DB if changed
