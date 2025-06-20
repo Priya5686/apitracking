@@ -87,10 +87,13 @@ def flight_form_view(request):
 def flight_status(request):
     try:
         if request.content_type == 'application/json':
-            data = json.loads(request.body)
+              body = request.body.decode()
+              if not body:
+                    return JsonResponse({'error': 'Empty JSON body'}, status=400)
+              data = json.loads(body)
         else:
             data = request.POST
-
+    
         iata_number = data.get('iata_number', '').strip()
         departure_date = data.get('departure_date', '').strip()
 
