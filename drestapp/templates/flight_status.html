@@ -200,6 +200,28 @@
         if (data.subscription_id) {
           subDisplay.textContent = data.subscription_id;
           subContainer.style.display = 'block';
+           // 🔁 Auto trigger refresh-subscription 1 hour before departure
+          const departureTime = new Date(flight.scheduled_departure_time).getTime();
+          const now = Date.now();
+          const oneHourBefore = departureTime - 3600000; // 1 hour in ms
+          const timeUntilTrigger = oneHourBefore - now;
+
+          if (timeUntilTrigger > 0) {
+            console.log(`⏳ Refresh scheduled in ${(timeUntilTrigger / 60000).toFixed(1)} minutes`);
+            setTimeout(() => {
+              console.log("⏱️ Triggering refresh-subscription...");
+              fetch(`/api/refresh-subscription/${data.subscription_id}/`, {
+                method: 'PATCH'
+              }).then(res => res.json())
+                .then(refreshResult => {
+                  console.log("✅ Refresh result:", refreshResult);
+                  fetchFlight(iata_number, departure_date);
+                })
+                .catch(err => console.error('❌ Refresh error:', err));
+            }, timeUntilTrigger);
+          } else {
+            console.log("⚠️ Departure time is near or passed. No refresh scheduled.");
+          }
         }
 
       } catch (err) {

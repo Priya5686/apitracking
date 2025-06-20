@@ -122,13 +122,16 @@ def flight_status(request):
             airline_name=flight_info["airline_name"],
             departure_airport=flight_info["scheduled_departure_airport"],
             departure_iata=flight_info["departure_iata"],
-            scheduled_departure_time=parse_datetime(flight_info["scheduled_departure_time"]),
-            actual_departure_time=parse_datetime(flight_info["actual_departure_time"]) if flight_info["actual_departure_time"] else None,
+            scheduled_departure_time_utc=parse_datetime(flight_info["scheduled_departure_time_utc"]),
+            scheduled_departure_time_local=parse_datetime(flight_info["scheduled_departure_time_local"]),
+            actual_departure_time_utc=parse_datetime(flight_info["actual_departure_time_utc"]) if flight_info["actual_departure_time_utc"] else None,
+            actual_departure_time_local=parse_datetime(flight_info["actual_departure_time_local"]) if flight_info["actual_departure_time_local"] else None,
             departure_gate=flight_info["departure_gate"],
             arrival_airport=flight_info["scheduled_arrival_airport"],
             arrival_iata=flight_info["arrival_iata"],
-            scheduled_arrival_time=parse_datetime(flight_info["scheduled_arrival_time"]),
-            actual_arrival_time=parse_datetime(flight_info["actual_arrival_time"]) if flight_info["actual_arrival_time"] else None,
+            scheduled_arrival_time_utc=parse_datetime(flight_info["scheduled_arrival_time_utc"]),
+            scheduled_arrival_time_local=parse_datetime(flight_info["scheduled_arrival_time_local"]),
+            actual_arrival_time_local=parse_datetime(flight_info["actual_arrival_time_local"]) if flight_info["actual_arrival_time_local"] else None,
             arrival_gate=flight_info["arrival_gate"],
             arrival_baggage_belt=flight_info["arrival_baggage_belt"],
         )
@@ -137,7 +140,7 @@ def flight_status(request):
         subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{iata_number}"
         payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
         headers = {
-            "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
+            "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com",
             "Content-Type": "application/json"
         }
@@ -190,7 +193,7 @@ def rapidapi_webhook(request):
 
         url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight_number}/{record.scheduled_departure_time.date()}"
         headers = {
-            "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
+            "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
         }
         response = requests.get(url, headers=headers)
@@ -262,3 +265,71 @@ def save_subscription(request):
 
 
 #return JsonResponse({'error': 'Invalid method'}, status=405)
+
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import now
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from datetime import timedelta
+from .models import RapidAPISubscription, FlightStatusRecord
+from django.conf import settings
+from .utils import notify_subscribers
+import requests
+
+@csrf_exempt
+@require_http_methods(["PATCH"])
+def refresh_subscription(request, subscription_id):
+    try:
+        sub = RapidAPISubscription.objects.select_related('flight').get(id=subscription_id)
+        flight = sub.flight
+
+        # ⏱ Check if it's within 1 hour before departure
+        if not (now() <= flight.scheduled_departure_time <= now() + timedelta(hours=1)):
+            return JsonResponse({'error': 'Flight is not within refresh window'}, status=400)
+
+        # 🔁 Call RapidAPI refresh endpoint
+        refresh_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/refresh/{subscription_id}"
+        headers = {
+            "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
+            "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
+        }
+
+        refresh_response = requests.patch(refresh_url, headers=headers)
+        if refresh_response.status_code != 200:
+            return JsonResponse({'error': 'Failed to refresh subscription'}, status=500)
+
+        # 📥 Now fetch updated flight info
+        flight_info_url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight.flight_number}/{flight.scheduled_departure_time.date()}"
+        data_response = requests.get(flight_info_url, headers=headers)
+        flight_data = data_response.json()
+
+        updated_fields = {
+            "departure_gate": flight_data.get("departure", {}).get("gate"),
+            "arrival_gate": flight_data.get("arrival", {}).get("gate"),
+            "arrival_baggage_belt": flight_data.get("arrival", {}).get("baggageBelt") or flight_data.get("arrival", {}).get("baggage"),
+            "scheduled_departure_time": flight_data.get("departure", {}).get("scheduledTimeUtc"),
+            "scheduled_arrival_time": flight_data.get("arrival", {}).get("scheduledTimeUtc"),
+            "actual_departure_time": flight_data.get("departure", {}).get("actualTimeUtc"),
+            "actual_arrival_time": flight_data.get("arrival", {}).get("actualTimeUtc"),
+        }
+
+        # 🛠 Update DB if changed
+        changes = {}
+        for field, value in updated_fields.items():
+            if value and str(getattr(flight, field)) != str(value):
+                setattr(flight, field, value)
+                changes[field] = value
+
+        if changes:
+            flight.save()
+            notify_subscribers(f"Flight {flight.flight_number} updated via refresh", f"Changed: {', '.join(changes.keys())}")
+
+        return JsonResponse({
+            'message': 'Flight data refreshed',
+            'updated_fields': changes
+        })
+
+    except RapidAPISubscription.DoesNotExist:
+        return JsonResponse({'error': 'Subscription not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

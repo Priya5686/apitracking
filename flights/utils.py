@@ -145,18 +145,19 @@ def fetch_flight_info(iata_number, departure_date):
 
             "scheduled_departure_airport": flight.get("departure", {}).get("airport", {}).get("name"),
             "departure_iata": flight.get("departure", {}).get("airport", {}).get("iata"),
-            "scheduled_departure_time": flight.get("departure", {}).get("scheduledTime", {}).get("utc"),
-            "scheduled_departure_time": flight.get("departure", {}).get("scheduledTime", {}).get("local"),
-            "actual_departure_time": flight.get("departure", {}).get("actualTime", {}).get("utc"),
-            "actual_departure_time": flight.get("departure", {}).get("actualTime", {}).get("local"),
+            "scheduled_departure_time_utc": flight.get("departure", {}).get("scheduledTime", {}).get("utc"),
+            "scheduled_departure_time_local": flight.get("departure", {}).get("scheduledTime", {}).get("local"),
+            #departure_time = f"UTC: {scheduled_departure_time_utc} | Local: {scheduled_departure_time_local}"
+            "actual_departure_time_utc": flight.get("departure", {}).get("actualTime", {}).get("utc"),
+            "actual_departure_time_local": flight.get("departure", {}).get("actualTime", {}).get("local"),
             "departure_gate": flight.get("departure", {}).get("gate"),
 
             "scheduled_arrival_airport": flight.get("arrival", {}).get("airport", {}).get("name"),
             "arrival_iata": flight.get("arrival", {}).get("airport", {}).get("iata"),
-            "scheduled_arrival_time": flight.get("arrival", {}).get("scheduledTime", {}).get("utc"),
-            "scheduled_arrival_time": flight.get("arrival", {}).get("scheduledTime", {}).get("local"),
-            "actual_arrival_time": flight.get("arrival", {}).get("actualTime", {}).get("utc"),
-            "actual_arrival_time": flight.get("arrival", {}).get("actualTime", {}).get("local"),
+            "scheduled_arrival_time_utc": flight.get("arrival", {}).get("scheduledTime", {}).get("utc"),
+            "scheduled_arrival_time_local": flight.get("arrival", {}).get("scheduledTime", {}).get("local"),
+            "actual_arrival_time_utc": flight.get("arrival", {}).get("actualTime", {}).get("utc"),
+            "actual_arrival_time_local": flight.get("arrival", {}).get("actualTime", {}).get("local"),
             "arrival_gate": flight.get("arrival", {}).get("gate"),
             "arrival_baggage_belt": flight.get("arrival", {}).get("baggageBelt"),
             
