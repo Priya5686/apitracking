@@ -141,7 +141,7 @@ def flight_status(request):
         subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{iata_number}"
         payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
         headers = {
-            "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
+            "X-RapidAPI-Key": settings.NEWAPI_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com",
             "Content-Type": "application/json"
         }
@@ -194,7 +194,7 @@ def rapidapi_webhook(request):
 
         url = f"https://aerodatabox.p.rapidapi.com/flights/number/{flight_number}/{record.scheduled_departure_time.date()}"
         headers = {
-            "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
+            "X-RapidAPI-Key": settings.NEWAPI_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
         }
         response = requests.get(url, headers=headers)
@@ -291,7 +291,7 @@ def refresh_subscription(request, subscription_id):
         # 🔁 Call RapidAPI refresh endpoint
         refresh_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/refresh/{subscription_id}"
         headers = {
-            "X-RapidAPI-Key": settings.RAPIDWEBHOOK_KEY,
+            "X-RapidAPI-Key": settings.NEWAPI_KEY,
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
         }
 
