@@ -8,28 +8,22 @@
     body {
       font-family: Arial, sans-serif;
       padding: 30px;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
     }
-
     h1 {
       text-align: center;
-      margin-bottom: 20px;
     }
-
     form {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-
     input, button {
       font-size: 1rem;
       padding: 10px;
       width: 100%;
-      box-sizing: border-box;
     }
-
     button {
       cursor: pointer;
       background-color: #1e90ff;
@@ -37,15 +31,13 @@
       border: none;
       border-radius: 4px;
     }
-
     .input-wrapper {
       position: relative;
     }
-
     .suggestions {
       list-style: none;
-      padding: 0;
       margin: 0;
+      padding: 0;
       border: 1px solid #ccc;
       max-height: 150px;
       overflow-y: auto;
@@ -55,35 +47,31 @@
       width: 100%;
       z-index: 1000;
     }
-
     .suggestions li {
       padding: 10px;
       cursor: pointer;
     }
-
     .suggestions li:hover {
       background-color: #eee;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
       display: none;
     }
-
     th, td {
       padding: 10px;
       border: 1px solid #ccc;
       text-align: center;
     }
-
     pre {
-      margin-top: 15px;
-      background: #f0f0f0;
-      padding: 10px;
-      border-radius: 5px;
+      background-color: #f7f7f7;
+      padding: 12px;
+      margin-top: 20px;
+      border-radius: 4px;
       font-size: 0.9rem;
+      overflow-x: auto;
     }
   </style>
 </head>
@@ -110,6 +98,10 @@
 
   <pre id="result"></pre>
 
+  <div id="subIdContainer" style="margin-top: 10px; display: none;">
+    <strong>Subscription ID (for testing):</strong> <code id="subIdDisplay"></code>
+  </div>
+
   <table id="flightTable">
     <thead>
       <tr>
@@ -128,8 +120,6 @@
   </table>
 
   <script>
-    const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";  // Injected by Django
-
     const airlines = [
       { name: "Air India", code: "AI" },
       { name: "Emirates", code: "EK" },
@@ -165,17 +155,12 @@
       if (e.target !== input) suggestionBox.innerHTML = '';
     });
 
-    document.getElementById('flightForm').onsubmit = async function (e) {
-      e.preventDefault();
-
-      const airlineCode = codeInput.value.toUpperCase().trim();
-      const flightNumber = document.getElementById('flight_number').value.trim();
-      const departureDate = document.getElementById('departure_date').value.trim();
-      const iata_number = airlineCode + flightNumber;
-
+    async function fetchFlight(iata_number, departure_date) {
       const resultEl = document.getElementById('result');
       const table = document.getElementById('flightTable');
       const tbody = document.getElementById('flightTableBody');
+      const subDisplay = document.getElementById('subIdDisplay');
+      const subContainer = document.getElementById('subIdContainer');
 
       resultEl.textContent = 'Fetching flight status...';
 
@@ -183,18 +168,19 @@
         const response = await fetch('/api/flightstatus/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ iata_number, departure_date: departureDate })
+          body: JSON.stringify({ iata_number, departure_date })
         });
 
         const data = await response.json();
+
         if (!response.ok) {
           resultEl.textContent = 'Error: ' + (data.error || 'Unknown error');
           table.style.display = 'none';
+          subContainer.style.display = 'none';
           return;
         }
 
         const flight = data.flight;
-        resultEl.textContent = '';
         tbody.innerHTML = `
           <tr>
             <td>${flight.flight_number}</td>
@@ -208,50 +194,54 @@
             <td>${flight.arrival_baggage_belt || '-'}</td>
           </tr>
         `;
+        resultEl.textContent = '';
         table.style.display = 'table';
+
+        if (data.subscription_id) {
+          subDisplay.textContent = data.subscription_id;
+          subContainer.style.display = 'block';
+        }
 
       } catch (err) {
         resultEl.textContent = 'Request failed: ' + err.message;
         table.style.display = 'none';
+        subContainer.style.display = 'none';
       }
+    }
+
+    document.getElementById('flightForm').onsubmit = async function (e) {
+      e.preventDefault();
+      const airlineCode = codeInput.value.toUpperCase().trim();
+      const flightNumber = document.getElementById('flight_number').value.trim();
+      const departureDate = document.getElementById('departure_date').value.trim();
+      const iata_number = airlineCode + flightNumber;
+      fetchFlight(iata_number, departureDate);
     };
 
-    // ✅ Register service worker once, globally
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.register('/static/js/sw.js')
         .then(swReg => {
-          console.log('✅ Service Worker registered', swReg);
-          askPermissionAndSubscribe(swReg);
-        })
-        .catch(err => console.error('❌ SW registration failed:', err));
-
-      function askPermissionAndSubscribe(swReg) {
-        Notification.requestPermission().then(permission => {
-          if (permission === 'granted') {
-            swReg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-            }).then(subscription => {
-              return fetch('/api/save-subscription/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subscription)
+          console.log('✅ Service Worker registered');
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              swReg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: "{{ vapid_public_key }}"
+              }).then(subscription => {
+                return fetch('/api/save-subscription/', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(subscription)
+                });
               });
-            }).then(res => res.json())
-              .then(data => console.log('✅ Subscription saved:', data))
-              .catch(err => console.error('❌ Subscription failed:', err));
-          }
+            }
+          });
+          navigator.serviceWorker.addEventListener('message', function (event) {
+            const { iata_number, departure_date } = event.data;
+            fetchFlight(iata_number, departure_date);
+          });
         });
-      }
-
-      function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = atob(base64);
-        return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-      }
     }
   </script>
-
 </body>
 </html>

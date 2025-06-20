@@ -159,6 +159,7 @@ def fetch_flight_info(iata_number, departure_date):
             "actual_arrival_time": flight.get("arrival", {}).get("actualTime", {}).get("local"),
             "arrival_gate": flight.get("arrival", {}).get("gate"),
             "arrival_baggage_belt": flight.get("arrival", {}).get("baggageBelt"),
+            
 
             #"delay_departure_minutes": flight.get("departure", {}).get("delay"),
             #"delay_arrival_minutes": flight.get("arrival", {}).get("delay"),

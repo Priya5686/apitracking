@@ -162,7 +162,7 @@ def flight_status(request):
             }
         )
 
-        return JsonResponse({"message": "Flight info saved", "flight": flight_info})
+        return JsonResponse({"message": "Flight info saved", "flight": flight_info, "subscription_id": sub_data["id"]})
 
     except requests.HTTPError as http_err:
         return JsonResponse({'error': f'API error: {http_err}'}, status=500)
@@ -199,16 +199,24 @@ def rapidapi_webhook(request):
         # Safely extract and update gate and baggage info
         updates = {
             "departure_gate": data.get("departure", {}).get("gate"),
+            "scheduled_departure_time": data.get("departure", {}).get("scheduledTime"),
+            "actual_departure_time": data.get("departure", {}).get("actualTimeUtc"),
+    
             "arrival_gate": data.get("arrival", {}).get("gate"),
-            "arrival_baggage_belt": data.get("arrival", {}).get("baggageBelt") or data.get("arrival", {}).get("baggage")
+            "arrival_baggage_belt": data.get("arrival", {}).get("baggageBelt") or data.get("arrival", {}).get("baggage"),
+            "scheduled_arrival_time": data.get("arrival", {}).get("scheduledTimeUtc"),
+            "actual_arrival_time": data.get("arrival", {}).get("actualTimeUtc"),
         }
 
         cleaned = {k: v for k, v in updates.items() if v}
         print("🔄 Updating:", cleaned)
 
         for key, value in cleaned.items():
-            setattr(record, key, value)
+              if 'time' in key:
+                 value = parse_datetime(value)  # safely parse to datetime
+              setattr(record, key, value)
         record.save()
+           
 
         from .utils import notify_subscribers
         notify_subscribers(f"Flight {flight_number} updated", "Check your dashboard for changes.")
