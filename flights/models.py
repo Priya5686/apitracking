@@ -11,14 +11,14 @@ class FlightStatusRecord(models.Model):
 
     departure_airport = models.CharField(max_length=100)
     departure_iata = models.CharField(max_length=10)
-    scheduled_departure_time = models.DateTimeField()
-    actual_departure_time = models.DateTimeField(null=True, blank=True)
+    scheduled_departure_time_local = models.DateTimeField()
+    actual_departure_time_local = models.DateTimeField(null=True, blank=True)
     departure_gate = models.CharField(max_length=10, null=True, blank=True)
 
     arrival_airport = models.CharField(max_length=100)
     arrival_iata = models.CharField(max_length=10)
-    scheduled_arrival_time = models.DateTimeField()
-    actual_arrival_time = models.DateTimeField(null=True, blank=True)
+    scheduled_arrival_time_local = models.DateTimeField()
+    actual_arrival_time_local = models.DateTimeField(null=True, blank=True)
     arrival_gate = models.CharField(max_length=10, null=True, blank=True)
     arrival_baggage_belt = models.CharField(max_length=10, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
