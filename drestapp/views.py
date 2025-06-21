@@ -250,33 +250,48 @@ def oauth_callback(request):
     # Retrieve PKCE code verifier from session
     code_verifier = request.session.pop("pkce_verifier", None)
     if not code_verifier:
+        logger.warning("Missing PKCE verifier in session.")
         return JsonResponse({"error": "PKCE verifier is required."}, status=400)
 
     # Exchange the authorization code for tokens
     #token_url = "http://127.0.0.1:8000/o/token/"
     token_url = settings.OAUTH_TOKEN_URL
-    response = requests.post(token_url, data={
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
-        "client_id": settings.OAUTH_CLIENT_ID,
-        "client_secret": settings.OAUTH_CLIENT_SECRET,
-        "code_verifier": code_verifier,
-        #"scope": "read write",
-    })
+    try:
+        response = requests.post(token_url, data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
+            "client_id": settings.OAUTH_CLIENT_ID,
+            "client_secret": settings.OAUTH_CLIENT_SECRET,
+            "code_verifier": code_verifier,
+            #"scope": "read write",
+        }timeout=10)
+    except requests.RequestException as e:
+        logger.exception("Token exchange request failed")
+        return JsonResponse({"error": f"Token request failed: {str(e)}"}, status=500)
 
     if response.status_code != 200:
-        print("❌ Token exchange failed:", response.text)  # Add this line for debugging
+        logger.warning("Token exchange failed: %s", response.text)
+        #print("❌ Token exchange failed:", response.text)  # Add this line for debugging
         return JsonResponse({"error": response.text}, status=response.status_code)
         #return JsonResponse({"error": "Token exchange failed."}, status=response.status_code)
-
-    tokens = response.json()
+    try:
+        tokens = response.json()
+    except ValueError:
+        logger.error("Invalid JSON in token response: %s", response.text)
+        return JsonResponse({"error": "Invalid token response format"}, status=500)
+    
+    access_token = tokens.get("access_token")
+    refresh_token = tokens.get("refresh_token")
+    if not access_token or not refresh_token:
+        logger.warning("Missing access or refresh token: %s", tokens)
+        return JsonResponse({"error": "Token response incomplete"}, status=500)
 
 
     res = redirect("/dashboard/")
     res.set_cookie(
         key="access_token",
-        value=tokens.get("access_token"),
+        value=access_token,
         httponly=True,
         max_age=3600,
         samesite="Lax",
@@ -284,12 +299,13 @@ def oauth_callback(request):
     )
     res.set_cookie(
         key="refresh_token",
-        value=tokens.get("refresh_token"),
+        value="refresh_token",
         httponly=True,
         max_age=86400,
         samesite="Lax",
         secure=not settings.DEBUG
     )
+    logger.info("OAuth login complete. Redirecting to dashboard.")
     return res
 
 class CustomAuthorizationView(AuthorizationView):
