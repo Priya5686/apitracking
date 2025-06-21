@@ -261,11 +261,11 @@ def oauth_callback(request):
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
-            "client_id": settings.OAUTH_CLIENT_ID,
+           "client_id": settings.OAUTH_CLIENT_ID,
             "client_secret": settings.OAUTH_CLIENT_SECRET,
             "code_verifier": code_verifier,
             #"scope": "read write",
-        }timeout=10)
+        },  timeout=10)
     except requests.RequestException as e:
         logger.exception("Token exchange request failed")
         return JsonResponse({"error": f"Token request failed: {str(e)}"}, status=500)
