@@ -261,7 +261,7 @@ def oauth_callback(request):
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
-           "client_id": settings.OAUTH_CLIENT_ID,
+            "client_id": settings.OAUTH_CLIENT_ID,
             "client_secret": settings.OAUTH_CLIENT_SECRET,
             "code_verifier": code_verifier,
             #"scope": "read write",
@@ -377,7 +377,7 @@ def refresh_access_token(request):
 
     try:
         response = requests.post(
-            "http://127.0.0.1:8000/o/token/",
+            f"{settings.SITE_URL}/o/token/",
             data=data,
             headers=headers,
             timeout=10
