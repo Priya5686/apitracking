@@ -48,8 +48,6 @@ else:
     }
 
 # OAuth2 Credentials (used for Authorization Code flow)
-OAUTH_CLIENT_ID = os.getenv("OAUTH_CLIENT_ID", "")
-OAUTH_CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET", "")
 SITE_URL = os.getenv("SITE_URL","https://oauthapp-8izz.onrender.com")
 OAUTH_AUTHORIZE_URL = f"{SITE_URL}/o/authorize/"
 OAUTH_TOKEN_URL = f"{SITE_URL}/o/token/"
