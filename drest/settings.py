@@ -184,6 +184,7 @@ REST_FRAMEWORK = {
 
 
 OAUTH2_PROVIDER = {
+    'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
     'ALLOW_GRANT_TYPE_FOR_PUBLIC_CLIENTS': True,
     'REQUEST_APPROVAL_PROMPT': 'auto',
     'ALLOWED_REDIRECT_URI_SCHEMES': ['http', 'https'],
