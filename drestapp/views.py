@@ -265,7 +265,7 @@ def oauth_callback(request):
             "client_secret": settings.OAUTH_CLIENT_SECRET,
             "code_verifier": code_verifier,
             #"scope": "read write",
-        },  timeout=10)
+        },  timeout=30)
     except requests.RequestException as e:
         logger.exception("Token exchange request failed")
         return JsonResponse({"error": f"Token request failed: {str(e)}"}, status=500)
