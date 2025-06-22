@@ -467,12 +467,12 @@ class DashboardApiView(APIView):
             return JsonResponse({"error": result.get("error", "Invalid token")}, status=401)
 
         # Return user info
-        return JsonResponse({
+        """return JsonResponse({
             "username": result.get("username"),
             "client_id": result.get("client_id"),
             "user_id": result.get("user_id"),
             "scope": result.get("scope"),
-        })
+        })"""
 
 
 

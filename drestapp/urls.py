@@ -20,14 +20,13 @@ urlpatterns = [
     # Main application routes
     path('', home_view, name='home'),
     path('register/', register_view, name='register'),
-    #Call oauthcallbackapi
-    path('login/', login_view, name='login'),
-    #Render HTML
     path('login_page/', login_page, name='login_page'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('profile/', profile_view, name='profile'),
+    #Call oauthcallbackapi
+    path('login/', login_view, name='login'),
     path('api/dashboard/', DashboardApiView.as_view(), name='dashboard-api'),
-    #Exchange token
+    #path('api/dashboard/', dashboard_view, name='dashboard_view'),
     path('oauth/callback/', oauth_callback, name='oauth_callback'),
     path('o/authorize/', CustomAuthorizationView.as_view(), name='authorize'),
     path('api/register/', RegisterView.as_view(), name='api_register'),
@@ -36,7 +35,7 @@ urlpatterns = [
     path('api/account/', AccountView.as_view(), name='account_view'),
     path('api/refresh-token/', refresh_access_token, name='refresh_token'),
     path('api/whoami/', WhoAmIEndpoint.as_view(), name='whoami'),
-    path('api/dashboard/', dashboard_view, name='dashboard_view'),
+   
     path('api/logout/', LogoutView.as_view(), name='logout_view'),
     path('forgot-password/', forgot_password_view, name='forgot-password'),
     path('reset-password/<uidb64>/<token>/', reset_password_view, name='reset-password'),
