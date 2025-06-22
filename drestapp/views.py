@@ -184,24 +184,34 @@ def generate_code_challenge(verifier):
     hashed = hashlib.sha256(verifier.encode()).digest()
     return base64.urlsafe_b64encode(hashed).decode().rstrip("=")
 
+from .serializers import RegularLoginSerializer
+
 
 
 @csrf_protect
 def login_view(request):
     if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
+        data = {
+            "email": request.POST.get("email"),
+            "password": request.POST.get("password")
+        }
 
-        if not email or not password:
-            return render(request, "login.html", {"error": "Email and password are required."})
+        serializer = RegularLoginSerializer(data=data)
+
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            login(request, user)
+
+        #if not email or not password:
+            #return render(request, "login.html", {"error": "Email and password are required."})
 
         # Authenticate user
-        user = authenticate(request, email=email, password=password)
-        if not user:
-            return render(request, "login.html", {"error": "Invalid credentials"})
+        #user = authenticate(request, email=email, password=password)
+        #if not user:
+            #return render(request, "login.html", {"error": "Invalid credentials"})
 
         # Login user
-        login(request, user)
+        #login(request, user)
 
         code_verifier = generate_code_verifier()
         code_challenge = generate_code_challenge(code_verifier)
