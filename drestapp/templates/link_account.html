@@ -3,24 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>Link Google Account</title>
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/auth.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-<h2>Link Google Account</h2>
-<p>We found an existing account with the email <strong>{{ email }}</strong>.</p>
-<p>To link your Google login, please enter your password to confirm ownership.</p>
+</head>
 
-<form method="POST">
-  {% csrf_token %}
-  <input type="password" name="password" placeholder="Your password" required>
-  <button type="submit">Link Account</button>
-</form>
+<body>
+  <div class="login-wrapper">
+    <div class="form-box">
+      <h2>Link Google Account</h2>
+      <p>We found an existing account with the email <strong>{{ email }}</strong>.</p>
+      <p>To link your Google login, please enter your password to confirm</p>
 
-{% if messages %}
-  <ul>
-    {% for message in messages %}
-      <li style="color: red;">{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
+      <form method="POST">
+        {% csrf_token %}
+        <input type="password" name="password" placeholder="Your password" required>
+        <button type="submit" class="primary-btn">Link Account</button>
+      </form>
+
+      {% if messages %}
+        <ul class="messages">
+          {% for message in messages %}
+            <li class="{{ message.tags }}" style="color: red;">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
