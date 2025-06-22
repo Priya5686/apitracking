@@ -202,9 +202,13 @@ def login_view(request):
         # Save the verifier in session for later use
         request.session["pkce_verifier"] = code_verifier
 
-
-        print(f"PKCE Code Verifier: {code_verifier}")
+        logger.debug(f"PKCE Verifier: {code_verifier}")
         print(f"PKCE Code Challenge: {code_challenge}")
+
+
+
+        #print(f"PKCE Code Verifier: {code_verifier}")
+        #print(f"PKCE Code Challenge: {code_challenge}")
 
         # Generate PKCE code verifier and challenge
         #code_verifier = "random_generated_code_verifier"  # Replace with dynamic generation
@@ -256,16 +260,24 @@ def oauth_callback(request):
     # Exchange the authorization code for tokens
     #token_url = "http://127.0.0.1:8000/o/token/"
     token_url = settings.OAUTH_TOKEN_URL
+    headers = {
+    "Content-Type": "application/x-www-form-urlencoded"
+    }
     try:
-        response = requests.post(token_url, data={
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
-            "client_id": settings.OAUTH_CLIENT_ID,
-            "client_secret": settings.OAUTH_CLIENT_SECRET,
-            "code_verifier": code_verifier,
-            "scope": "read write",
-        },  timeout=60)
+        response = requests.post(
+            token_url, 
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": f"{settings.SITE_URL}/oauth/callback/",
+                "client_id": settings.OAUTH_CLIENT_ID,
+                "client_secret": settings.OAUTH_CLIENT_SECRET,
+                "code_verifier": code_verifier,
+                "scope": "read write",
+            }, 
+            headers=headers,
+            timeout=60
+        )      
     except requests.RequestException as e:
         logger.exception("Token exchange request failed")
         return JsonResponse({"error": f"Token request failed: {str(e)}"}, status=500)
@@ -299,7 +311,7 @@ def oauth_callback(request):
     )
     res.set_cookie(
         key="refresh_token",
-        value="refresh_token",
+        value=refresh_token,
         httponly=True,
         max_age=86400,
         samesite="Lax",
@@ -317,8 +329,11 @@ class CustomAuthorizationView(AuthorizationView):
 
         if not getattr(user, "email_verified", False):
             return HttpResponseForbidden("Authorization denied: user not verified.")
+        
+        logger.info(f"User {user.email} entered authorization flow.")
 
-        print("✔️ User entering authorize flow:", user.email)
+
+        #print("✔️ User entering authorize flow:", user.email)
         return super().dispatch(request, *args, **kwargs)
 
 
