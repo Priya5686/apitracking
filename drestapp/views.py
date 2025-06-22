@@ -26,6 +26,10 @@ from django.utils.encoding import force_bytes, force_str
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views.decorators.http import require_POST
 from .models import ExtractedEvent, GmailMessage
+from django.utils.decorators import method_decorator
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from django.http import JsonResponse
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -437,28 +441,37 @@ def token_from_cookie(request):
         return None
     
 
+
 class DashboardApiView(APIView):
     permission_classes = [AllowAny]
 
     @method_decorator(csrf_exempt)
     def get(self, request, *args, **kwargs):
-        access_token = request.session.get("access_token") or request.COOKIES.get("access_token")
+        # Retrieve access token from session or cookies
+        access_token = (
+            request.session.get("access_token") or
+            request.COOKIES.get("access_token")
+        )
+
         print("🎫 Dashboard access token:", access_token)
 
         if not access_token:
             return JsonResponse({"error": "No access token provided"}, status=401)
 
+        # Validate token
         result = validate_access_token(access_token)
 
-        if not result["status"]:
-            return JsonResponse({"error": result["error"]}, status=401)
+        if not result.get("status"):
+            return JsonResponse({"error": result.get("error", "Invalid token")}, status=401)
 
+        # Return user info
         return JsonResponse({
-            "username": result["username"],
-            "client_id": result["client_id"],
-            "user_id": result["user_id"],
-            "scope": result["scope"],
+            "username": result.get("username"),
+            "client_id": result.get("client_id"),
+            "user_id": result.get("user_id"),
+            "scope": result.get("scope"),
         })
+
 
 
 class AccountView(APIView):
