@@ -278,6 +278,9 @@ def oauth_callback(request):
             headers=headers,
             timeout=60
         )      
+        logger.debug("🎯 Token status: %s", response.status_code)
+        logger.debug("🧾 Token raw response: %s", response.text)
+
     except requests.RequestException as e:
         logger.exception("Token exchange request failed")
         return JsonResponse({"error": f"Token request failed: {str(e)}"}, status=500)
