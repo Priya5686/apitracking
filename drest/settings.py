@@ -117,7 +117,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_kqm18y_jv8_k6kivh5w%$-8+=z2!jouh4^0gs+j^c@=_p8f!7'
 
 
-DEBUG = True
+#DEBUG = False
 
 #ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
 
@@ -354,8 +354,11 @@ EMAIL_HOST_PASSWORD = 'uzgh hqmh sfqk yoea'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
+import logging
+
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
