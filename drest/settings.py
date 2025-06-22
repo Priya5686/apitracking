@@ -228,7 +228,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
 SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ['access_token', 'refresh_token', 'expires']
 
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'https://oauthapp-8izz.onrender.com/complete/google-oauth2/'
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'https://oauthapp-8izz.onrender.com/social-auth/complete/google-oauth2/'
 #SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/dashboard/'
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/oauth/success/'
 SOCIAL_AUTH_LOGOUT_REDIRECT_URL = '/login/'
