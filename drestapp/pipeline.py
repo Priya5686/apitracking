@@ -1,13 +1,33 @@
-from django.contrib.auth import get_user_model
-from social_core.exceptions import AuthException
-from social_core.exceptions import AuthAlreadyAssociated
 from django.conf import settings
 import requests
+from django.shortcuts import redirect
+from social_core.pipeline.partial import partial
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-def link_to_existing_user(backend, details, user=None, *args, **kwargs):
-    """If not logged in, try to link Google to existing user with same email."""
+@partial
+def link_to_existing_user(strategy, backend, details, user=None, *args, **kwargs):
+    if user:
+        # Already logged in — proceed normally
+        return {'user': user}
+
+    email = details.get('email')
+    if not email:
+        return
+
+    try:
+        existing_user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return  # No existing user, allow pipeline to continue
+
+    # Social account is not yet linked, and this email already exists
+    strategy.session_set("link_email", email)
+    return redirect("/link-account/")
+
+
+"""def link_to_existing_user(backend, details, user=None, *args, **kwargs):
+    If not logged in, try to link Google to existing user with same email.
     if user:
         return {'user': user}
 
@@ -29,10 +49,10 @@ def debug_pipeline_step(backend, user=None, *args, **kwargs):
     print(f"Backend: {backend.name}")
     print(f"User: {user}")
     print(f"Args: {args}")
-    print(f"Kwargs: {kwargs}")
+    print(f"Kwargs: {kwargs}")"""
 
 
-import requests
+"""import requests
 import base64
 import logging
 from django.conf import settings
@@ -164,7 +184,7 @@ def save_emails_to_db(strategy, backend, user, **kwargs):
 
 
 
-"""def save_emails_to_google_sheet(strategy, backend, user, **kwargs):
+def save_emails_to_google_sheet(strategy, backend, user, **kwargs):
     if backend.name != "google-oauth2":
         return
 

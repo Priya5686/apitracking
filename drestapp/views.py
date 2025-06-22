@@ -723,6 +723,32 @@ class GoogleOAuthAuthentication(BaseAuthentication):
         user, _ = User.objects.get_or_create(username=email, defaults={"email": email})
         return (user, None)
     
+# views.py
+
+from django.contrib.auth import authenticate, login
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.models import User
+
+def link_account_view(request):
+    email = request.session.get("link_email")
+    if not email:
+        return redirect("/login/")
+
+    if request.method == "POST":
+        password = request.POST.get("password")
+        user = authenticate(request, username=email, password=password)
+        if user:
+            login(request, user)
+            return redirect("/complete/google-oauth2/")
+        else:
+            messages.error(request, "Incorrect password.")
+    
+    return render(request, "link_account.html", {"email": email})
+
+    
+
+    
 
 """from dateutil.parser import parse 
 

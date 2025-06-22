@@ -13,7 +13,7 @@ from .views import (
     AccountView,
     refresh_access_token,
     WhoAmIEndpoint,LogoutView, forgot_password_view, reset_password_view, GetAccessTokenView,
-    profile_view,login_page, oauth_success_redirect
+    profile_view,login_page, oauth_success_redirect, link_account_view
 )
 
 urlpatterns = [
@@ -41,6 +41,7 @@ urlpatterns = [
     path('forgot-password/', forgot_password_view, name='forgot-password'),
     path('reset-password/<uidb64>/<token>/', reset_password_view, name='reset-password'),
     path('api/get-token/', GetAccessTokenView.as_view(), name='get-access-token'),
+     path("link-account/", link_account_view, name="link-account"),
     #path('api/weather/', WeatherAPIView.as_view(), name='weather'),
     #path('weather/', weather_view, name='weather'),
     #after login,validates the token

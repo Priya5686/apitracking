@@ -75,3 +75,28 @@ class AccountSerializer(serializers.ModelSerializer):
         if not attrs.get("first_name") and not attrs.get("last_name"):
             raise serializers.ValidationError("Both first_name and last_name cannot be empty.")
         return attrs
+
+
+from django.contrib.auth import authenticate
+from rest_framework import serializers
+
+class RegularLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        email = data.get("email")
+        password = data.get("password")
+
+        if not email or not password:
+            raise serializers.ValidationError("Both email and password are required.")
+
+        user = authenticate(username=email, password=password)
+        if not user:
+            raise serializers.ValidationError("Invalid email or password.")
+
+        if not user.is_active:
+            raise serializers.ValidationError("This account is inactive. Please contact support.")
+
+        data["user"] = user
+        return data
