@@ -78,11 +78,9 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 AVIATIONAPI_KEY = os.getenv('AVIATIONAPI_KEY')
 NEWAPI_KEY = os.getenv('NEWAPI_KEY')
 #RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
-#RAPIDWEBHOOK_KEY = os.getenv('RAPIDWEBHOOK_KEY')
 
-# Redirect URI base
-#SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
-#SITE_URL=http://localhost:8000
+
+
 
 
 
@@ -117,11 +115,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_kqm18y_jv8_k6kivh5w%$-8+=z2!jouh4^0gs+j^c@=_p8f!7'
 
 
-#DEBUG = False
 
-#ALLOWED_HOSTS = ['testservice-qh07.onrender.com']
-
-#ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -165,12 +159,12 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = True
+#CORS_ORIGIN_ALLOW_ALL = True
+#CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "https://oauthapp-8izz.onrender.com",
 ]
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 
 REST_FRAMEWORK = {
@@ -195,6 +189,7 @@ OAUTH2_PROVIDER = {
     'ROTATE_REFRESH_TOKEN': False,
     'OAUTH2_BACKEND_CLASS':'oauth2_provider.oauth2_backends.OAuthLibCore',
     'SCOPES': {'read': 'Read access', 'write': 'Write access'},
+    'DEFAULT_SCOPES': ['read'],
     'PKCE_REQUIRED': True,
     'ALLOW_SCOPES_FOR_PUBLIC_CLIENTS': True,
     'SCOPES_BACKEND_CLASS': 'oauth2_provider.scopes.SettingsScopes',
