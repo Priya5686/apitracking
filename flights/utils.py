@@ -1,44 +1,4 @@
 #Aviation Stack
-"""import requests
-from django.conf import settings
-
-def get_flight_status_from_aviationstack(flight_number, airline_name, departure_date):
-    AIRLINE_MAP = {
-    "Emirates": "EK",
-    "Qatar Airways": "QR",
-    "Etihad": "EY",
-    "IndiGo": "6E",
-    "Air India": "AI",
-    "SpiceJet": "SG",
-    "Air Arabia": "G9",
-    "American Airlines": "AA",
-}
-    airline_iata = AIRLINE_MAP.get(airline_name)
-    if not airline_iata:
-        return {"error": "Unsupported airline name"}
-    
-    #flight_iata = f"{airline_iata}{flight_number}"
-    
-    API_KEY = settings.AVIATIONAPI_KEY
-    url = 'http://api.aviationstack.com/v1/flights'
-
-    params = {
-        'access_key': API_KEY,
-        'flight_iata': flight_number,
-        #'flight_iata': flight_iata,
-        'airline_name': airline_name,
-        'dep_date': departure_date,
-    }
-
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-
-    data = response.json()
-    # Parse or simplify data as needed
-    return data"""
-
-
-#Aviation Stack
 """nabled
 AIRLINE_MAP = {
     "Emirates": "EK",

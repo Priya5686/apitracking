@@ -1,4 +1,4 @@
-import os
+"""import os
 import json
 import requests
 from django.utils import timezone as dj_timezone
@@ -207,6 +207,6 @@ def extract_events_fallback(text):
                 }
                 events.append(parsed_event)
 
-    return json.dumps({"events": events}, indent=2)
+    return json.dumps({"events": events}, indent=2)"""
 
 

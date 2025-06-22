@@ -76,33 +76,8 @@ SECURE_HSTS_SECONDS = 3600  # or higher
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-AVIATIONAPI_KEY = os.getenv('AVIATIONAPI_KEY')
+#AVIATIONAPI_KEY = os.getenv('AVIATIONAPI_KEY')
 NEWAPI_KEY = os.getenv('NEWAPI_KEY')
-#RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
-
-
-
-
-
-
-#This is working one. If nothing works will fix this
-
-"""import os
-from decouple import Config, RepositoryEnv 
-
-ENV = os.getenv("DJANGO_ENV", "development")
-env_file = f".env.{ENV}"
-config = Config(RepositoryEnv(env_file))
-
-
-OAUTH_CLIENT_ID = config('OAUTH_CLIENT_ID')
-OAUTH_CLIENT_SECRET = config('OAUTH_CLIENT_SECRET')
-JWT_SECRET_KEY = config('JWT_SECRET_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
-AVIATIONAPI_KEY = config('AVIATIONAPI_KEY')"""
-
-
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -145,7 +120,6 @@ MIDDLEWARE = [
     'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-   
     'whitenoise.middleware.WhiteNoiseMiddleware',
     #'drestapp.middleware.access_token.AccessTokenMiddleware',
     #'drestapp.middleware.dashboard_access.DashboardAccessMiddleware',

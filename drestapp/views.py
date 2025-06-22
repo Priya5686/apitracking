@@ -70,6 +70,9 @@ def profile_view(request):
 def login_page(request):
     return render(request, "login.html")
 
+def dashboard_view(request):
+    return render(request, "dashboard.html")
+
 
 
 logger = logging.getLogger(__name__)
@@ -205,18 +208,6 @@ def login_view(request):
         logger.debug(f"PKCE Verifier: {code_verifier}")
         print(f"PKCE Code Challenge: {code_challenge}")
 
-
-
-        #print(f"PKCE Code Verifier: {code_verifier}")
-        #print(f"PKCE Code Challenge: {code_challenge}")
-
-        # Generate PKCE code verifier and challenge
-        #code_verifier = "random_generated_code_verifier"  # Replace with dynamic generation
-        #code_challenge = generate_code_challenge(code_verifier)
-        #request.session["pkce_verifier"] = code_verifier
-        #print(f"PKCE Code Verifier: {code_verifier}")
-        #print(f"PKCE Code Challenge: {code_challenge}")
-
         # Redirect to OAuth provider
         auth_url = (
             f"{settings.OAUTH_AUTHORIZE_URL}?response_type=code&client_id={settings.OAUTH_CLIENT_ID}"
@@ -237,8 +228,6 @@ def login_view(request):
     verified = request.GET.get("verified","").lower() == "true"
     context = {"verified": verified}
     return render(request, "login.html", context)
-
-
 
 
 def log_event(event_message):
@@ -338,40 +327,40 @@ class CustomAuthorizationView(AuthorizationView):
 
         #print("✔️ User entering authorize flow:", user.email)
         return super().dispatch(request, *args, **kwargs)
+    
 
+def validate_access_token(access_token):
+    data = {
+        "token": access_token,
+        "token_type_hint": "access_token",
+        "client_id": settings.OAUTH_CLIENT_ID,
+        "client_secret": settings.OAUTH_CLIENT_SECRET,
+    }
 
-"""def validate_access_token(access_token):
     try:
-        # Decode JWT token
-        decoded_token = jwt_decode(access_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
-        logger.info(f"Token successfully decoded: {decoded_token}")
+        response = requests.post(
+            f"{settings.SITE_URL}/o/introspect/",
+            data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=5
+        )
 
-        # Validate the expiration (exp) claim
-        expiration = decoded_token.get("exp")
-        expiration_time = datetime.utcfromtimestamp(expiration)
-        logger.debug(f"Token expiration time: {expiration_time}")
-        if not expiration:
-            logger.warning("Token does not have an expiration claim.")
-            return {"status": False, "error": "Missing expiration claim."}
+        if response.status_code == 200:
+            info = response.json()
+            if info.get("active"):
+                return {
+                    "status": True,
+                    "user_id": info.get("user_id"),
+                    "scope": info.get("scope"),
+                    "username": info.get("username"),
+                    "client_id": info.get("client_id"),
+                }
+            return {"status": False, "error": "Token inactive or expired."}
 
-        # Convert expiration timestamp to datetime
-        expiration_time = datetime.utcfromtimestamp(expiration)
-        if expiration_time < datetime.now(timezone.utc):
-            logger.warning(f"Token expired at {expiration_time}.")
-            return {"status": False, "error": "Token expired."}
+        return {"status": False, "error": f"Failed introspect: {response.status_code}"}
 
-        logger.info(f"Token is valid. Expiration time: {expiration_time}")
-        return {"status": True, "message": "Token is valid."}
-
-    except ExpiredSignatureError:
-        logger.error("Token has expired.")
-        return {"status": False, "error": "Token has expired."}
-    except InvalidTokenError as e:
-        logger.error(f"Invalid token: {str(e)}")
-        return {"status": False, "error": f"Invalid token: {str(e)}"}
-    except Exception as e:
-        logger.error(f"Unexpected error during token validation: {str(e)}")
-        return {"status": False, "error": f"Unexpected error: {str(e)}"}"""
+    except requests.RequestException as e:
+        return {"status": False, "error": f"Token introspection error: {str(e)}"}
 
 
 
@@ -414,7 +403,6 @@ def refresh_access_token(request):
     except requests.RequestException as e:
         return Response({"error": str(e)}, status=500)
 
-    
 
 
 logger = logging.getLogger(__name__)
@@ -447,29 +435,30 @@ def token_from_cookie(request):
     except Exception as e:
         logger.error(f"Unexpected error in token_from_cookie: {str(e)}")
         return None
+    
 
+class DashboardApiView(APIView):
+    permission_classes = [AllowAny]
 
-"""class DashboardApiView(APIView):
-    authentication_classes = [OAuth2Authentication]
-    permission_classes = [IsAuthenticated]
-
+    @method_decorator(csrf_exempt)
     def get(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return JsonResponse({"error": "Unauthorized"}, status=401)
+        access_token = request.session.get("access_token") or request.COOKIES.get("access_token")
+        print("🎫 Dashboard access token:", access_token)
 
-        #social_auths = UserSocialAuth.objects.filter(user=request.user).values("provider", "uid")
-        user = request.user
+        if not access_token:
+            return JsonResponse({"error": "No access token provided"}, status=401)
+
+        result = validate_access_token(access_token)
+
+        if not result["status"]:
+            return JsonResponse({"error": result["error"]}, status=401)
+
         return JsonResponse({
-            "username": user.username,
-            "email": user.email,
-            "is_staff": user.is_staff,
-            #"social_associations": list(social_auths)
-        })"""
-
-
-def dashboard_view(request):
-    return render(request, "dashboard.html")
-
+            "username": result["username"],
+            "client_id": result["client_id"],
+            "user_id": result["user_id"],
+            "scope": result["scope"],
+        })
 
 
 class AccountView(APIView):
@@ -513,30 +502,6 @@ class WhoAmIEndpoint(APIView):
 
 logger = logging.getLogger(__name__)
 
-
-def example_view(request):
-    try:
-        utc_time = datetime.now(timezone.utc)
-        param = request.GET.get("param", None)
-        if not param:
-            return Response({"message": "Error", "detail": "Missing parameter 'param'."}, status=400)
-
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-        user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
-
-        return Response({
-            "message": "Success",
-            "utc_time": utc_time.isoformat(),
-            "param": param,
-            "client_ip": client_ip,
-            "user_agent": user_agent,
-            "detail": "Request processed successfully."
-        })
-    except Exception as e:
-        return Response({
-            "message": "Error",
-            "detail": str(e)
-        }, status=500)
 
 from django.contrib.auth import logout
 
@@ -616,39 +581,6 @@ def reset_password_view(request, uidb64, token):
         return redirect('forgot-password')
 
 
-def validate_access_token(access_token):
-    data = {
-        "token": access_token,
-        "token_type_hint": "access_token",
-        "client_id": settings.OAUTH_CLIENT_ID,
-        "client_secret": settings.OAUTH_CLIENT_SECRET,
-    }
-
-    try:
-        response = requests.post(
-            f"{settings.SITE_URL}/o/introspect/",
-            data=data,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=5
-        )
-
-        if response.status_code == 200:
-            info = response.json()
-            if info.get("active"):
-                return {
-                    "status": True,
-                    "user_id": info.get("user_id"),
-                    "scope": info.get("scope"),
-                    "username": info.get("username"),
-                    "client_id": info.get("client_id"),
-                }
-            return {"status": False, "error": "Token inactive or expired."}
-
-        return {"status": False, "error": f"Failed introspect: {response.status_code}"}
-
-    except requests.RequestException as e:
-        return {"status": False, "error": f"Token introspection error: {str(e)}"}
-
 
 class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
@@ -677,101 +609,6 @@ class GetAccessTokenView(APIView):
         except Exception as e:
             logger.error(f"Error retrieving access token: {e}")
             return JsonResponse({"error": "Internal server error"}, status=500)
-
-
-        #if access_token:
-            #return JsonResponse({"access_token": access_token})
-
-
-
-
-
-"""class GetAccessTokenView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        access_token = request.COOKIES.get('access_token')
-        if access_token:
-            return JsonResponse({"access_token": access_token})
-        return JsonResponse({"error": "No access token found."}, status=401)"""
-
-
-
-
-
-class WeatherAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        API_KEY = settings.TOMORROW_IO_API_KEY
-        location = request.GET.get("location", "Dubai")
-        print("Location requested:", location)
-        #LAT = 25.276987
-        #LON = 55.296249
-
-        if not API_KEY:
-            return JsonResponse({"error": "Missing API key."}, status=500)
-
-        url = f"https://api.tomorrow.io/v4/weather/realtime?location={location}&apikey={API_KEY}"
-
-        try:
-            res = requests.get(url)
-            if res.status_code == 200:
-                data = res.json()
-                values = data.get("data", {}).get("values", {})
-                return JsonResponse({
-                    "temperature": values.get("temperature"),
-                    "weatherCode": values.get("weatherCode")
-                })
-            else:
-                return JsonResponse({"error": "Failed to fetch weather data."}, status=500)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-
-def weather_view(request):
-    return render(request, "weather.html")
-
-
-#@csrf_protect
-#@require_POST
-"""def store_pkce_verifier(request):
-    try:
-        body = json.loads(request.body)
-        verifier = body.get("verifier")
-        if not verifier:
-            return JsonResponse({"error": "Missing verifier"}, status=400)
-
-        print(f"CSRF token received: {request.META.get('HTTP_X_CSRFTOKEN')}")
-
-        # Store the PKCE verifier in session for server-side handling
-        request.session["pkce_verifier"] = verifier
-        # Set secure, HttpOnly cookie for additional storage
-        response = JsonResponse({"status": "ok"})
-        response.set_cookie(
-            key="pkce_verifier",
-            value=verifier,
-            max_age=300,  # Short-lived cookie
-            httponly=True,  # Prevent JS access (XSS mitigation)
-            secure=not settings.DEBUG,  # Secure flag for production
-            samesite="Lax"  # Prevent CSRF attacks
-        )
-        print("✅ Stored verifier in session and cookie:", verifier)
-        return response
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON format"}, status=400)
-    except Exception as e:
-        print("❌ Error storing verifier:", str(e))
-        return JsonResponse({"error": "Server error"}, status=500)"""
-
-"""class DashboardAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({
-            "username": request.user.username,
-            "email": request.user.email,
-        })"""
-
 
 
 def oauth_success_redirect(request):
@@ -848,77 +685,6 @@ def oauth_success_redirect(request):
     )
     return response
 
-
-
-def safe_parse(value):
-    if isinstance(value, str):
-        try:
-            return parse(value)
-        except ValueError:
-            return None
-    return value
-
-class GmailEventDetectionView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        all_events = []
-        messages = GmailMessage.objects.order_by('-received_at')[:3]  # Fetch multiple emails
-
-        for msg in messages:
-            #email_text = msg.plain_content.replace("**", "").strip()
-            email_text = (msg.plain_content or "").replace("**", "").strip()
-
-
-            # Primary event extraction using DeepSeek model
-            events = extract_events_with_ollama(email_text)
-
-            # Fallback check: If events have "TBD" or missing dates, try fallback extraction
-            for idx, e in enumerate(events):
-                if e.get("start") in ["TBD", None] or e.get("end") in ["TBD", None]:
-                    fallback_events = json.loads(extract_events_fallback(email_text)).get("events", [])
-                    
-                    # Ensure only missing fields are updated, rather than replacing full objects
-                    for fallback in fallback_events:
-                        if e.get("description") == fallback.get("description"):
-                            events[idx]["start"] = fallback.get("date", e.get("start"))
-                            events[idx]["end"] = fallback.get("date", e.get("end"))
-
-            # Deduplication logic before saving to DB
-            for e in events:
-                exists = ExtractedEvent.objects.filter(
-                    type=e.get("type", ""),
-                    description=e.get("description", ""),
-                    start_datetime=safe_parse(e.get("start"))
-                ).exists()
-
-                if not exists:
-                    event_obj, created = ExtractedEvent.objects.get_or_create(
-                        type=e.get("type", ""),
-                        description=e.get("description", ""),
-                        start_datetime=safe_parse(e.get("start")),
-                        end_datetime=safe_parse(e.get("end")),
-                        user=request.user
-                    )
-             
-                    all_events.append({
-                        "id": event_obj.id,
-                        "type": event_obj.type,
-                        "description": event_obj.description,
-                        "start": event_obj.start_datetime.isoformat() if event_obj.start_datetime else None,
-                        "end": event_obj.end_datetime.isoformat() if event_obj.end_datetime else None
-                    })
-        upcoming_events = ExtractedEvent.objects.filter(user=request.user,start_datetime__gte=now()).order_by("start_datetime")
-
-        return Response({
-            "events": all_events,
-            "message_count": len(messages)
-        })
-
-
-
-
-
 class GoogleOAuthAuthentication(BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.headers.get("Authorization")
@@ -944,19 +710,8 @@ class GoogleOAuthAuthentication(BaseAuthentication):
         user, _ = User.objects.get_or_create(username=email, defaults={"email": email})
         return (user, None)
     
-from django.contrib.auth import login
 
-def google_login_success(request):
-    user = request.user
-    if user.is_authenticated:
-        login(request, user) 
-        return redirect('/dashboard/')
-    return redirect('/login/')
-
-
-
-
-from dateutil.parser import parse 
+"""from dateutil.parser import parse 
 
 logger = logging.getLogger(__name__)  # ✅ Initialize logging
 
@@ -1101,30 +856,109 @@ def fetch_stored_flights(request):
 
 from django.utils.decorators import method_decorator
 
-class DashboardApiView(APIView):
-    permission_classes = [AllowAny]
-
-    @method_decorator(csrf_exempt)
-    def get(self, request, *args, **kwargs):
-        access_token = request.session.get("access_token") or request.COOKIES.get("access_token")
-        print("🎫 Dashboard access token:", access_token)
-
-        if not access_token:
-            return JsonResponse({"error": "No access token provided"}, status=401)
-
-        result = validate_access_token(access_token)
-
-        if not result["status"]:
-            return JsonResponse({"error": result["error"]}, status=401)
-
-        return JsonResponse({
-            "username": result["username"],
-            "client_id": result["client_id"],
-            "user_id": result["user_id"],
-            "scope": result["scope"],
-        })
 
 
+
+
+def safe_parse(value):
+    if isinstance(value, str):
+        try:
+            return parse(value)
+        except ValueError:
+            return None
+    return value
+
+class GmailEventDetectionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        all_events = []
+        messages = GmailMessage.objects.order_by('-received_at')[:3]  # Fetch multiple emails
+
+        for msg in messages:
+            #email_text = msg.plain_content.replace("**", "").strip()
+            email_text = (msg.plain_content or "").replace("**", "").strip()
+
+
+            # Primary event extraction using DeepSeek model
+            events = extract_events_with_ollama(email_text)
+
+            # Fallback check: If events have "TBD" or missing dates, try fallback extraction
+            for idx, e in enumerate(events):
+                if e.get("start") in ["TBD", None] or e.get("end") in ["TBD", None]:
+                    fallback_events = json.loads(extract_events_fallback(email_text)).get("events", [])
+                    
+                    # Ensure only missing fields are updated, rather than replacing full objects
+                    for fallback in fallback_events:
+                        if e.get("description") == fallback.get("description"):
+                            events[idx]["start"] = fallback.get("date", e.get("start"))
+                            events[idx]["end"] = fallback.get("date", e.get("end"))
+
+            # Deduplication logic before saving to DB
+            for e in events:
+                exists = ExtractedEvent.objects.filter(
+                    type=e.get("type", ""),
+                    description=e.get("description", ""),
+                    start_datetime=safe_parse(e.get("start"))
+                ).exists()
+
+                if not exists:
+                    event_obj, created = ExtractedEvent.objects.get_or_create(
+                        type=e.get("type", ""),
+                        description=e.get("description", ""),
+                        start_datetime=safe_parse(e.get("start")),
+                        end_datetime=safe_parse(e.get("end")),
+                        user=request.user
+                    )
+             
+                    all_events.append({
+                        "id": event_obj.id,
+                        "type": event_obj.type,
+                        "description": event_obj.description,
+                        "start": event_obj.start_datetime.isoformat() if event_obj.start_datetime else None,
+                        "end": event_obj.end_datetime.isoformat() if event_obj.end_datetime else None
+                    })
+        upcoming_events = ExtractedEvent.objects.filter(user=request.user,start_datetime__gte=now()).order_by("start_datetime")
+
+        return Response({
+            "events": all_events,
+            "message_count": len(messages)
+        })"""
+
+
+
+"""class WeatherAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        API_KEY = settings.TOMORROW_IO_API_KEY
+        location = request.GET.get("location", "Dubai")
+        print("Location requested:", location)
+        #LAT = 25.276987
+        #LON = 55.296249
+
+        if not API_KEY:
+            return JsonResponse({"error": "Missing API key."}, status=500)
+
+        url = f"https://api.tomorrow.io/v4/weather/realtime?location={location}&apikey={API_KEY}"
+
+        try:
+            res = requests.get(url)
+            if res.status_code == 200:
+                data = res.json()
+                values = data.get("data", {}).get("values", {})
+                return JsonResponse({
+                    "temperature": values.get("temperature"),
+                    "weatherCode": values.get("weatherCode")
+                })
+            else:
+                return JsonResponse({"error": "Failed to fetch weather data."}, status=500)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+def weather_view(request):
+    return render(request, "weather.html")
+"""
 
 
 

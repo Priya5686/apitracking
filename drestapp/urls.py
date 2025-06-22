@@ -42,13 +42,13 @@ urlpatterns = [
     path('forgot-password/', forgot_password_view, name='forgot-password'),
     path('reset-password/<uidb64>/<token>/', reset_password_view, name='reset-password'),
     path('api/get-token/', GetAccessTokenView.as_view(), name='get-access-token'),
-    path('api/weather/', WeatherAPIView.as_view(), name='weather'),
-    path('weather/', weather_view, name='weather'),
+    #path('api/weather/', WeatherAPIView.as_view(), name='weather'),
+    #path('weather/', weather_view, name='weather'),
     #after login,validates the token
     path('oauth/success/', oauth_success_redirect, name='oauth-success'),
-    path('api/gmail-events/', GmailEventDetectionView.as_view(), name='gmail-events'),
-    path('api/extract-events-fallback/', extract_events_fallback, name='extract-events-fallback'),
-    path("api/fetch-flight-data/", flight_data_view, name="fetch-flight-data"),
-    path("api/fetch-stored-flights/", fetch_stored_flights, name="fetch-stored-flights"), 
+    #path('api/gmail-events/', GmailEventDetectionView.as_view(), name='gmail-events'),
+    #path('api/extract-events-fallback/', extract_events_fallback, name='extract-events-fallback'),
+    #path("api/fetch-flight-data/", flight_data_view, name="fetch-flight-data"),
+    #path("api/fetch-stored-flights/", fetch_stored_flights, name="fetch-stored-flights"), 
  
 ]
