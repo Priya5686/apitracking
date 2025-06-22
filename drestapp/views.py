@@ -52,7 +52,7 @@ from drestapp.models import (
     ExtractedEvent,
 )
 from drestapp.serializers import RegisterSerializer, AccountSerializer
-from drestapp.utils import extract_events_with_ollama, extract_events_fallback
+#from drestapp.utils import extract_events_with_ollama, extract_events_fallback
 import logging
 
 
