@@ -774,12 +774,12 @@ def weather_view(request):
 
 
 
-"""def oauth_success_redirect(request):
+def oauth_success_redirect(request):
     user = request.user
     if not user.is_authenticated:
         return redirect('/login/')
 
-    app = Application.objects.get(name='demo app')
+    app = Application.objects.get(name='ClapOut')
 
     now = timezone.now()
     access_token = AccessToken.objects.filter(
@@ -846,7 +846,7 @@ def weather_view(request):
         samesite='Lax',
         secure=False  # change to True in production
     )
-    return response"""
+    return response
 
 
 
