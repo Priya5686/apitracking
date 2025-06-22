@@ -191,27 +191,19 @@ from .serializers import RegularLoginSerializer
 @csrf_protect
 def login_view(request):
     if request.method == "POST":
-        data = {
-            "email": request.POST.get("email"),
-            "password": request.POST.get("password")
-        }
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        
+        if not email or not password:
+            return render(request, "login.html", {"error": "Email and password are required."})
 
-        serializer = RegularLoginSerializer(data=data)
-
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
-            login(request, user)
-
-        #if not email or not password:
-            #return render(request, "login.html", {"error": "Email and password are required."})
-
-        # Authenticate user
-        #user = authenticate(request, email=email, password=password)
-        #if not user:
-            #return render(request, "login.html", {"error": "Invalid credentials"})
+        #Authenticate user
+        user = authenticate(request, email=email, password=password)
+        if not user:
+            return render(request, "login.html", {"error": "Invalid credentials"})
 
         # Login user
-        #login(request, user)
+        login(request, user)
 
         code_verifier = generate_code_verifier()
         code_challenge = generate_code_challenge(code_verifier)
