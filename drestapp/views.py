@@ -305,7 +305,7 @@ def oauth_callback(request):
         httponly=True,
         max_age=3600,
         samesite="Lax",
-        secure=not settings.DEBUG
+        secure=True
     )
     res.set_cookie(
         key="refresh_token",
@@ -313,7 +313,7 @@ def oauth_callback(request):
         httponly=True,
         max_age=86400,
         samesite="Lax",
-        secure=not settings.DEBUG
+        secure=True
     )
     logger.info("OAuth login complete. Redirecting to dashboard.")
     return res
