@@ -442,6 +442,29 @@ def token_from_cookie(request):
         logger.error(f"Unexpected error in token_from_cookie: {str(e)}")
         return None
     
+import requests
+from django.shortcuts import render, redirect
+
+def dashboard_view(request):
+    access_token = request.session.get("access_token")
+    if not access_token:
+        return redirect("login")
+
+    # Call your internal API to get the dashboard data
+    api_url = request.build_absolute_uri("/api/dashboard/")
+    headers = {"Authorization": f"Bearer {access_token}"}
+    cookies = request.COOKIES
+
+    response = requests.get(api_url, headers=headers, cookies=cookies)
+
+    if response.status_code == 200:
+        dashboard_data = response.json()
+    else:
+        dashboard_data = {"error": "Failed to load dashboard data."}
+
+    return render(request, "dashboard.html", {"data": dashboard_data})
+
+    
 
 
 class DashboardApiView(APIView):
