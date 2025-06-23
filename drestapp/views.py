@@ -448,17 +448,8 @@ class DashboardApiView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        user = request.user
-        token = request.auth  # this is the validated access token
-
-        return JsonResponse({
-            "username": user.username,
-            "user_id": user.id,
-            "client_id": getattr(token, "application_id", "N/A"),
-            "scope": token.scope if token else "unknown",
-        })
-        # Retrieve access token from session or cookies
-        """access_token = (
+        #Retrieve access token from session or cookies
+        access_token = (
             request.session.get("access_token") or
             request.COOKIES.get("access_token")
         )
@@ -480,7 +471,7 @@ class DashboardApiView(APIView):
             "client_id": result.get("client_id"),
             "user_id": result.get("user_id"),
             "scope": result.get("scope"),
-        })"""
+        })
 
 
 
