@@ -52,11 +52,10 @@ OAUTH_AUTHORIZE_URL = os.getenv("OAUTH_AUTHORIZE_URL", f"{SITE_URL}/o/authorize/
 OAUTH_TOKEN_URL = os.getenv("OAUTH_TOKEN_URL", f"{SITE_URL}/o/token/")
 OAUTH_CLIENT_ID = os.getenv("OAUTH_CLIENT_ID", "")
 OAUTH_CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET", "")
-# OAuth2 Credentials (used for Authorization Code flow)
+
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", "")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", "")
-# JWT Secret Key for decoding access tokens if needed
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "JWT_SECRET_KEY")
 VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
@@ -181,7 +180,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
-    'drestapp.pipeline.save_emails_to_db'
+    #'drestapp.pipeline.save_emails_to_db'
     #'drestapp.pipeline.save_emails_to_google_sheet',
 )
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
@@ -288,8 +287,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "drest", "static")
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # For collectstatic on deployment
-
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  
 
 
 #STATIC_URL = '/static/'
