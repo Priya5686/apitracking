@@ -3,10 +3,33 @@ import requests
 from django.shortcuts import redirect
 from social_core.pipeline.partial import partial
 from django.contrib.auth import get_user_model
+from social_core.exceptions import AuthException
 
-User = get_user_model()
+def associate_by_email_if_safe(strategy, details, backend, user=None, *args, **kwargs):
+    if user:
+        return  # already authenticated
 
-@partial
+    email = details.get('email')
+    if not email:
+        raise AuthException(backend, "No email address provided by Google.")
+
+    User = get_user_model()
+
+    try:
+        existing_user = User.objects.get(email=email)
+
+        if existing_user.has_usable_password():
+            # Prevent linking to accounts that have passwords (for safety)
+            raise AuthException(backend, "An account already exists with this email. Please sign in using your email and password.")
+        else:
+            # Safe to associate — user came from social only
+            return {'user': existing_user}
+
+    except User.DoesNotExist:
+        return  # Allow pipeline to create new user
+
+
+"""@partial
 def link_to_existing_user(strategy, backend, details, user=None, *args, **kwargs):
     if user:
         # Already logged in — proceed normally
@@ -23,11 +46,11 @@ def link_to_existing_user(strategy, backend, details, user=None, *args, **kwargs
 
     # Social account is not yet linked, and this email already exists
     strategy.session_set("link_email", email)
-    return redirect("/link-account/")
+    return redirect("/link-account/")"""
 
 
 """def link_to_existing_user(backend, details, user=None, *args, **kwargs):
-    If not logged in, try to link Google to existing user with same email.
+    #If not logged in, try to link Google to existing user with same email.
     if user:
         return {'user': user}
 
