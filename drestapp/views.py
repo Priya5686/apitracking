@@ -442,8 +442,22 @@ def token_from_cookie(request):
         logger.error(f"Unexpected error in token_from_cookie: {str(e)}")
         return None
     
-
 class DashboardApiView(APIView):
+    authentication_classes = [OAuth2Authentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        return JsonResponse({
+            "username": user.username,
+            "email": user.email,
+            "user_id": user.id,
+            "is_staff": user.is_staff,
+        })
+
+    
+
+"""class DashboardApiView(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
 
@@ -471,7 +485,7 @@ class DashboardApiView(APIView):
             "client_id": result.get("client_id"),
             "user_id": result.get("user_id"),
             "scope": result.get("scope"),
-        })
+        })"""
 
 
 
@@ -600,21 +614,21 @@ class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        print("🔍 Session keys:", list(request.session.keys()))
-        print("🔐 Session token:", request.session.get("access_token"))
-        print("🍪 Cookie token:", request.COOKIES.get("access_token"))
-        #access_token = request.COOKIES.get('access_token')
+        """print("🔍 Session keys:", list(request.session.keys()))
+        #print("Session token:", request.session.get("access_token"))
+        #print("Cookie token:", request.COOKIES.get("access_token"))
+        #access_token = request.COOKIES.get('access_token')"""
         access_token = request.session.get('access_token') or request.COOKIES.get('access_token')
-        print("Session token:", request.session.get('access_token'))
-        print("Cookie token:", request.COOKIES.get('access_token'))
-        print("Access token from cookie:", access_token)
+        #print("Session token:", request.session.get('access_token'))
+        #print("Cookie token:", request.COOKIES.get('access_token'))
+        #print("Access token from cookie:", access_token)
 
         if not access_token:
             return JsonResponse({"error": "No access token found."}, status=401)
         
         try:
             token = AccessToken.objects.filter(token=access_token).first()
-            print("Token from DB:", token)
+            #print("Token from DB:", token)
 
             if token is None or token.is_expired():
                 return JsonResponse({"error": "Token expired or invalid."}, status=401)

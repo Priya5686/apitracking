@@ -30,14 +30,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         validate_password(value)  
         return value
 
-    def validate(self, attrs):
-        """email = attrs.get('email')
-        username = attrs.get('username')
-        if CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError({"email": "A user with this email already exists."})
-        if CustomUser.objects.filter(username=username).exists():
-            raise serializers.ValidationError({"username": "A user with this username already exists."})"""
-        return attrs
+    """def validate(self, attrs):
+        return attrs"""
 
     # Create the user
     def create(self, validated_data):
