@@ -130,7 +130,7 @@ def fetch_flight_info(iata_number, departure_date):
         return {"error": str(e)}
 
 
-import json
+"""import json
 from pywebpush import webpush, WebPushException
 from django.conf import settings
 from .models import PushSubscription
@@ -160,7 +160,7 @@ def notify_subscribers(title, body):
             )
             print(f"✅ Notification sent to {sub.endpoint[:50]}...")
         except WebPushException as e:
-            print("❌ Push error:", e)
+            print("❌ Push error:", e)"""
 
                 
                
