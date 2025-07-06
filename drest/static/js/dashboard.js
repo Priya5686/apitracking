@@ -5,6 +5,7 @@ import {
     scheduleTokenRefresh,
     clearCachedToken
 } from "./auth.js";
+import { logout } from "./logout.js";
 
 async function loadDashboard() {
     const usernameElement = document.getElementById("username");
@@ -82,34 +83,6 @@ async function loadAIEvents() {
         console.error("Failed to fetch AI events:", err);
         eventsContainer.innerHTML = `<p>Error loading AI events.</p>`;
     }
-}
-
-export function logout() {
-    const csrfToken = getCSRFToken();
-
-    fetch("/api/logout/", {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": csrfToken
-        },
-        credentials: "include"
-    }).then(res => {
-        if (res.ok) {
-            clearCachedToken(); // ✅ from auth.js
-            window.location.href = "/";
-        } else {
-            console.error("Logout failed:", res.status);
-        }
-    }).catch(err => {
-        console.error("Logout error:", err);
-    });
-}
-
-function getCSRFToken() {
-    return document.cookie
-        .split("; ")
-        .find(row => row.startsWith("csrftoken="))
-        ?.split("=")[1] || "";
 }
 
 function formatTime(isoString) {
@@ -230,7 +203,7 @@ function displayMessage(message) {
     container.innerHTML = `<p>${message}</p>`;
 }
 
-// ✅ Clean single DOMContentLoaded block
+
 document.addEventListener("DOMContentLoaded", async () => {
     loadDashboard();
     loadAIEvents();

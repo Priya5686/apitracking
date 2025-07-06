@@ -1,4 +1,6 @@
-async function logout() {
+import { getAccessToken, clearCachedToken } from "./auth.js";
+
+export async function logout() {
     const csrfToken = getCSRFToken();
     const accessToken = await getAccessToken();
 
@@ -13,6 +15,7 @@ async function logout() {
         });
 
         if (res.ok) {
+            clearCachedToken(); 
             window.location.href = "/";
         } else {
             console.error("❌ Logout failed:", res.status);
@@ -21,3 +24,11 @@ async function logout() {
         console.error("❌ Error during logout:", err);
     }
 }
+
+function getCSRFToken() {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("csrftoken="))
+        ?.split("=")[1] || "";
+}
+
