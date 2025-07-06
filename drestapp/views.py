@@ -541,8 +541,10 @@ class LogoutView(APIView):
         response = Response({"msg": "Logged out successfully!"})
         response.delete_cookie("access_token")
         response.delete_cookie("sessionid")
-        #response.delete_cookie("refresh_token")
+        response.delete_cookie("csrftoken")  
         return response
+        #response.delete_cookie("refresh_token")
+
 
 
 def forgot_password_view(request):
