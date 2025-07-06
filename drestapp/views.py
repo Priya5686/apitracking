@@ -614,14 +614,14 @@ class GetAccessTokenView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        """print("🔍 Session keys:", list(request.session.keys()))
-        #print("Session token:", request.session.get("access_token"))
-        #print("Cookie token:", request.COOKIES.get("access_token"))
-        #access_token = request.COOKIES.get('access_token')"""
+        print("🔍 Session keys:", list(request.session.keys()))
+        print("Session token:", request.session.get("access_token"))
+        print("Cookie token:", request.COOKIES.get("access_token"))
+        access_token = request.COOKIES.get('access_token')
         access_token = request.session.get('access_token') or request.COOKIES.get('access_token')
-        #print("Session token:", request.session.get('access_token'))
-        #print("Cookie token:", request.COOKIES.get('access_token'))
-        #print("Access token from cookie:", access_token)
+        print("Session token:", request.session.get('access_token'))
+        print("Cookie token:", request.COOKIES.get('access_token'))
+        print("Access token from cookie:", access_token)
 
         if not access_token:
             return JsonResponse({"error": "No access token found."}, status=401)
