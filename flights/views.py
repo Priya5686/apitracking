@@ -78,7 +78,7 @@ def flight_status(request):
 
         from django.forms.models import model_to_dict
 
-        return JsonResponse(model_to_dict(record))
+        return JsonResponse(model_to_dict(record), status=201)
     
     except requests.HTTPError as http_err:
         return JsonResponse({'error': f'API error: {http_err}'}, status=500)
