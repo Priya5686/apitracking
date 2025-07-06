@@ -1,5 +1,13 @@
 import { getAccessToken, clearCachedToken } from "./auth.js";
 
+function getCSRFToken() {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("csrftoken="))
+        ?.split("=")[1] || "";
+}
+
+
 export async function logout() {
     const csrfToken = getCSRFToken();
     const accessToken = await getAccessToken();
@@ -25,10 +33,6 @@ export async function logout() {
     }
 }
 
-function getCSRFToken() {
-    return document.cookie
-        .split("; ")
-        .find(row => row.startsWith("csrftoken="))
-        ?.split("=")[1] || "";
-}
+window.logout = logout;
+
 
