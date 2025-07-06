@@ -75,8 +75,18 @@ def flight_status(request):
             arrival_gate=flight_info["arrival_gate"],
             arrival_baggage_belt=flight_info["arrival_baggage_belt"],
         )
-        """
-        # Subscribe to webhook
+
+        from django.forms.models import model_to_dict
+
+        return JsonResponse(model_to_dict(record))
+    
+    except requests.HTTPError as http_err:
+        return JsonResponse({'error': f'API error: {http_err}'}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+        
+        """# Subscribe to webhook
         subscribe_url = f"https://aerodatabox.p.rapidapi.com/subscriptions/webhook/FlightByNumber/{iata_number}"
         payload = {"url": f"{settings.SITE_URL}/api/rapidapi-webhook/"}
         headers = {
