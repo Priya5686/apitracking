@@ -442,7 +442,7 @@ def token_from_cookie(request):
         logger.error(f"Unexpected error in token_from_cookie: {str(e)}")
         return None
     
-class DashboardApiView(APIView):
+"""class DashboardApiView(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
 
@@ -453,11 +453,11 @@ class DashboardApiView(APIView):
             "email": user.email,
             "user_id": user.id,
             "is_staff": user.is_staff,
-        })
+        })"""
 
     
 
-"""class DashboardApiView(APIView):
+class DashboardApiView(APIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated]
 
@@ -485,7 +485,7 @@ class DashboardApiView(APIView):
             "client_id": result.get("client_id"),
             "user_id": result.get("user_id"),
             "scope": result.get("scope"),
-        })"""
+        })
 
 
 
